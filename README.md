@@ -8,7 +8,7 @@ Codigo fuente de la página web.
 
 ## Puesta en marcha (primera vez)
 
-Tener instalado Docker Desktop
+Tener instalado Docker Desktop y corriendo en segundo plano.
 
 ```bash
 # 1. Clonar el repositorio
