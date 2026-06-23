@@ -3,10 +3,7 @@ Codigo fuente de la página web.
 
 
 
-
-
 ---
-
 
 
 ## Puesta en marcha (primera vez)
@@ -15,7 +12,7 @@ Tener instalado Docker Desktop
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/N1ghtlyC0de/SmartSnack.git
+git clone https://github.com/SmartSnackOfficeOrganization/Smart_Snack_Office_Source_Code.git
 cd SmartSnack
 
 # 2. Crear archivo de variables de entorno a partir de la plantilla
@@ -33,6 +30,26 @@ Cuando termine de levantar, abre el navegador en:
 
 - **Backend (API Django):** http://localhost:8000
 - **Base de datos PostgreSQL:** localhost:5432
+
+---
+
+## Variables de entorno para local
+
+El proyecto necesita un archivo `Backend/.env` (NO se sube a Git).
+Usar `Backend/.env.example` como plantilla. Variables requeridas:
+
+| Variable | Descripción | Ejemplo (desarrollo local) |
+|---|---|---|
+| `DB_NAME` | Nombre de la base de datos | `smartsnack_db` |
+| `DB_USER` | Usuario de PostgreSQL | `smartsnack_user` |
+| `DB_PASSWORD` | Contraseña de PostgreSQL | `dev_password_123` |
+| `DB_HOST` | Host de la base de datos (nombre del servicio en Docker compose) | `db` |
+| `DB_PORT` | Puerto de PostgreSQL | `5432` |
+| `SECRET_KEY` | Clave secreta de Django | `django-insecure-...` |
+| `DEBUG` | Modo debug (True solo en desarrollo) | `True` |
+| `ALLOWED_HOSTS` | Hosts permitidos, separados por coma | `localhost,127.0.0.1,0.0.0.0` |
+
+> **Importante:** `DB_HOST` debe ser `db` (el nombre del servicio en docker-compose).
 
 ---
 
@@ -79,25 +96,6 @@ docker logs smartsnack_db
 
 ---
 
-## Variables de entorno
-
-El proyecto necesita un archivo `Backend/.env` (NO se sube a Git).
-Usar `Backend/.env.example` como plantilla. Variables requeridas:
-
-| Variable | Descripción | Ejemplo (desarrollo) |
-|---|---|---|
-| `DB_NAME` | Nombre de la base de datos | `smartsnack_db` |
-| `DB_USER` | Usuario de PostgreSQL | `smartsnack_user` |
-| `DB_PASSWORD` | Contraseña de PostgreSQL | `dev_password_123` |
-| `DB_HOST` | Host de la base de datos (nombre del servicio en Docker compose) | `db` |
-| `DB_PORT` | Puerto de PostgreSQL | `5432` |
-| `SECRET_KEY` | Clave secreta de Django | `django-insecure-...` |
-| `DEBUG` | Modo debug (True solo en desarrollo) | `True` |
-| `ALLOWED_HOSTS` | Hosts permitidos, separados por coma | `localhost,127.0.0.1,0.0.0.0` |
-
-> **Importante:** `DB_HOST` debe ser `db` (el nombre del servicio en docker-compose).
-
----
 
 ## Flujo de trabajo con Git
 
