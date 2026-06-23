@@ -18,7 +18,7 @@ Tener instalado Docker Desktop
 git clone https://github.com/N1ghtlyC0de/SmartSnack.git
 cd SmartSnack
 
-# 2. Crear tu archivo de variables de entorno a partir de la plantilla
+# 2. Crear archivo de variables de entorno a partir de la plantilla
 cp Backend/.env.example Backend/.env
 #   En Windows (CMD):  copy Backend\.env.example Backend\.env
 
@@ -136,8 +136,8 @@ git merge origin/develop
 git push -u origin feature/HU-XXX-nombre-corto
 ```
 
-En prueba: En la descripción del Pull Request, escribe `Closes #N` (número del issue)
-para cerrar automáticamente la tarjeta del tablero al mergear, si esta existe.
+En prueba: **Vincular el PR a su issue (si la hay).** En la descripción del Pull Request, escribor `Closes #N` (número del issue),
+al mergear, el issue se cierra solo y la tarjeta del tablero pasa a "Done" automáticamente.
 
 
 ---
