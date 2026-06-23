@@ -13,7 +13,7 @@ Tener instalado Docker Desktop
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/SmartSnackOfficeOrganization/Smart_Snack_Office_Source_Code.git
-cd SmartSnack
+cd Smart_Snack_Office_Source_Code
 
 # 2. Crear archivo de variables de entorno a partir de la plantilla
 cp Backend/.env.example Backend/.env
