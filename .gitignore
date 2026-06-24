@@ -224,3 +224,6 @@ node_modules/
 .env.local
 .env.production
 npm-debug.log*
+
+# Claude
+CLAUDE.MD
