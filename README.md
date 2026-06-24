@@ -89,6 +89,9 @@ docker exec -it smartsnack_backend python manage.py migrate
 # Crear un superusuario de Django
 docker exec -it smartsnack_backend python manage.py createsuperuser
 
+# corre los tests de Django. Para verificar que el código no rompe nada antes de abrir un PR.
+docker exec -it smartsnack_backend python manage.py test
+
 # Ver logs de un servicio
 docker logs smartsnack_backend
 docker logs smartsnack_db
