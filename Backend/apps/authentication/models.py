@@ -6,9 +6,13 @@ from django.contrib.postgres.fields import ArrayField
 
 
 class UserManager(BaseUserManager):
+    def normalize_email(self, email):
+        email = email or ''
+        return email.strip().lower()
+
     def create_user(self, email, full_name, role, password=None, **extra_fields):
         if not email:
-            raise ValueError('El email es obligatorio')
+            raise ValueError('The email address is mandatory.')
         email = self.normalize_email(email)
         user = self.model(email=email, full_name=full_name, role=role, **extra_fields)
         user.set_password(password)
@@ -42,13 +46,14 @@ class User(AbstractBaseUser):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
     failed_attempts = models.IntegerField(default=0, blank=True, null=True)
     blocked_until = models.DateTimeField(blank=True, null=True)
+    terms_accepted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     # Campos requeridos por Django admin cuando se extiende AbstractBaseUser
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
 
     objects = UserManager()
 

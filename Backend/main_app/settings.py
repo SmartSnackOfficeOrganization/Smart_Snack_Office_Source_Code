@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 from dotenv import load_dotenv
 import os
+import sys
 from datetime import timedelta
 
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'apps.authentication',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist'
 ]
 
 """
@@ -60,20 +62,61 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '5/hour',
+        'user': '20/day'
+    }
 }
+
+TESTING = 'test' in sys.argv
+
 AUTH_USER_MODEL = 'authentication.User'
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
 
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY
 }
 
+# Environment variable from docker-compose (Backend Service)
+CACHE_LOCATION = os.getenv('CACHE_LOCATION', 'cache:6379')
+
+if TESTING:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
+    REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
+        'anon': '10000/hour',
+        'user': '10000/hour',
+    }
+else:
+    CACHES = {
+        'default': {
+            "BACKEND": "django_redis.cache.RedisCache",
+            'LOCATION': f'redis://{CACHE_LOCATION}',
+        },
+    }
+
+BACKEND_URL = os.getenv('BACKEND_URL') or os.getenv('AUTH_URL', 'http://localhost:8000')
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'localhost')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '1025'))
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'False') == 'True'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@smartsnack.local')
 
 
 MIDDLEWARE = [
@@ -125,6 +168,9 @@ DATABASES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'apps.authentication.validators.ComplexPasswordValidator',
+    },
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
