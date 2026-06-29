@@ -3,17 +3,17 @@ from django.core import mail
 from django.utils.http import urlsafe_base64_decode
 from rest_framework.test import APITestCase
 from rest_framework import status
-from .models import User               
-from .models import BuyerProfile            
+from .models import User
+from .models import BuyerProfile
 
 
 class BuyerRegistrationSuccessFlowTests(APITestCase):
     def setUp(self):
-        self.register_url = reverse('register_buyer')  
+        self.register_url = reverse("register_buyer")
 
         self.valid_payload = {
-            "email": "Nuevo@Test.com",       
-            "full_name": "Nuevo Usuario",     
+            "email": "Nuevo@Test.com",
+            "full_name": "Nuevo Usuario",
             "password": "ContraseñaSegura123!",
             "confirm_password": "ContraseñaSegura123!",
             "terms_accepted": True,
@@ -53,7 +53,7 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
         self.assertIn(user.email, sent_email.to)
         self.assertIn("activate", sent_email.body.lower())
 
-    def test_full_flow_register_then_activate_via_link_in_email(self):       
+    def test_full_flow_register_then_activate_via_link_in_email(self):
         # Paso 1: registro
         response = self.client.post(self.register_url, self.valid_payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -65,19 +65,17 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
         self.assertEqual(len(mail.outbox), 1)
         email_body = mail.outbox[0].body
 
-        
         activation_url_in_email = self._extract_url(email_body)
         self.assertIsNotNone(
             activation_url_in_email,
-            "No se encontró una URL de activación en el cuerpo del email"
+            "No se encontró una URL de activación en el cuerpo del email",
         )
-        
+
         path = self._url_to_path(activation_url_in_email)
         activation_response = self.client.get(path)
 
         self.assertEqual(activation_response.status_code, status.HTTP_200_OK)
 
-        
         user.refresh_from_db()
         self.assertTrue(user.is_active)
 
@@ -85,7 +83,8 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
     def _extract_url(text):
         """Extrae la primera URL http(s) encontrada en un bloque de texto."""
         import re
-        match = re.search(r'https?://[^\s]+', text)
+
+        match = re.search(r"https?://[^\s]+", text)
         return match.group(0) if match else None
 
     @staticmethod
@@ -93,4 +92,5 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
         """Convierte una URL absoluta (http://host:puerto/path/) en solo el path,
         que es lo que self.client.get() espera."""
         from urllib.parse import urlparse
+
         return urlparse(full_url).path
