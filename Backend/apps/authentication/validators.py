@@ -1,8 +1,10 @@
-from rest_framework import serializers
-from django.core.exceptions import ValidationError
-from .models import User
-from django.contrib.auth.password_validation import validate_password
 import re
+
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
+from rest_framework import serializers
+
+from .models import User
 
 
 class ComplexPasswordValidator:

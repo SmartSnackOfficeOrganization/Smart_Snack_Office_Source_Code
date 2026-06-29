@@ -1,10 +1,9 @@
-from django.urls import reverse
 from django.core import mail
-from django.utils.http import urlsafe_base64_decode
-from rest_framework.test import APITestCase
+from django.urls import reverse
 from rest_framework import status
-from .models import User
-from .models import BuyerProfile
+from rest_framework.test import APITestCase
+
+from .models import BuyerProfile, User
 
 
 class BuyerRegistrationSuccessFlowTests(APITestCase):

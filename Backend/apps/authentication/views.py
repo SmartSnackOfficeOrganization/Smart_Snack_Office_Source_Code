@@ -1,19 +1,20 @@
 from django.contrib.auth import get_user_model
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.throttling import AnonRateThrottle
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .serializers import (
     BuyerRegistrationSerializer,
     SellerRegistrationSerializer,
     UserLoginSerializer,
 )
-from .token import get_tokens_for_user, AccountActivationTokenGenetator
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework.throttling import AnonRateThrottle
+from .token import AccountActivationTokenGenetator, get_tokens_for_user
 
 User = get_user_model()
 

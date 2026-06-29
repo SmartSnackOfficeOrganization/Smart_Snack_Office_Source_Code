@@ -1,11 +1,11 @@
-from rest_framework.response import Response
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from rest_framework import status
+from rest_framework.response import Response
 from rest_framework_simplejwt.serializers import (
     TokenRefreshSerializer,
     TokenVerifySerializer,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
 
 
 def get_tokens_for_user(user):

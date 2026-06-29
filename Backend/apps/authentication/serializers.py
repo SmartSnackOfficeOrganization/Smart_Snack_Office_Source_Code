@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.mail import send_mail
@@ -6,9 +8,8 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework import serializers
-from urllib.parse import urljoin
 
-from .models import User, BuyerProfile, SellerProfile
+from .models import BuyerProfile, SellerProfile, User
 from .token import AccountActivationTokenGenetator
 from .validators import PasswordValidationMixin, RegistrationValidationMixin
 
