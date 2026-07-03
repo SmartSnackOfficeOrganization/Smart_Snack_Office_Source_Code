@@ -18,6 +18,7 @@ from .token import AccountActivationTokenGenetator, get_tokens_for_user
 
 User = get_user_model()
 
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([AnonRateThrottle])
@@ -74,21 +75,21 @@ def logout(request):
     Requires a refresh token in the request body.
     """
     refresh_token = request.data.get("refresh")
-    
+
     # Check if refresh token is provided
     if not refresh_token:
         return Response(
             {"detail": "Refresh token is required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    
+
     try:
         token = RefreshToken(refresh_token)
         token.blacklist()
         return Response(
             {
                 "detail": "Successfully logged out",
-                "message": "Your session has been terminated"
+                "message": "Your session has been terminated",
             },
             status=status.HTTP_205_RESET_CONTENT,
         )

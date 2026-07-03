@@ -160,7 +160,7 @@ class UserLoginSerializer(serializers.Serializer):
     """
     Serializer for login with brute force protection.
     Implements account locking after 5 failed attempts for 30 minutes.
-    
+
     returns:
         email: ""
         password: ""
@@ -173,37 +173,37 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, data):
         email = data.get("email")
         password = data.get("password")
-        
+
         # Get user without authenticating first (to check if blocked)
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             raise serializers.ValidationError("Invalid credentials")
-        
+
         # Check if user is blocked
         if user.blocked_until and user.blocked_until > now():
             remaining_time = (user.blocked_until - now()).total_seconds() / 60
             raise serializers.ValidationError(
                 f"Account locked. Try again in {int(remaining_time)} minutes."
             )
-        
+
         # Reset block if time has passed
         if user.blocked_until and user.blocked_until <= now():
             user.blocked_until = None
             user.failed_attempts = 0
             user.save(update_fields=["blocked_until", "failed_attempts"])
-        
+
         # Check user is active
         if not user.is_active:
             raise serializers.ValidationError("User is not active")
-        
+
         # Authenticate with credentials
         authenticated_user = authenticate(email=email, password=password)
-        
+
         if not authenticated_user:
             # Increment failed attempts
             user.failed_attempts = (user.failed_attempts or 0) + 1
-            
+
             # Lock account if failed attempts reach limit
             if user.failed_attempts >= 5:
                 user.blocked_until = now() + timedelta(minutes=30)
@@ -218,11 +218,11 @@ class UserLoginSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     f"Invalid credentials. {attempts_left} attempts remaining."
                 )
-        
+
         # Login successful - reset failed attempts
         user.failed_attempts = 0
         user.blocked_until = None
         user.save(update_fields=["failed_attempts", "blocked_until"])
-        
+
         data["user"] = authenticated_user
         return data
