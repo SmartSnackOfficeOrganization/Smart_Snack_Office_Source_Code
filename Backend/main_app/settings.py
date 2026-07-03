@@ -49,8 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.postgres",
     "apps.authentication",
     "rest_framework",
-    "rest_framework_simplejwt.token_blacklist",
-    "apps.catalog",
+    "rest_framework_simplejwt.token_blacklist"
 ]
 
 """
