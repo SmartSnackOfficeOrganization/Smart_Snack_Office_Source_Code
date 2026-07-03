@@ -1,3 +1,4 @@
+from datetime import timedelta
 from urllib.parse import urljoin
 
 from django.conf import settings
@@ -7,6 +8,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.utils.timezone import now
 from rest_framework import serializers
 
 from .models import BuyerProfile, SellerProfile, User
@@ -156,7 +158,9 @@ class SellerRegistrationSerializer(
 
 class UserLoginSerializer(serializers.Serializer):
     """
-    Serializer for login. This serializer is used to validate the user input when logging in.
+    Serializer for login with brute force protection.
+    Implements account locking after 5 failed attempts for 30 minutes.
+    
     returns:
         email: ""
         password: ""
@@ -169,10 +173,56 @@ class UserLoginSerializer(serializers.Serializer):
     def validate(self, data):
         email = data.get("email")
         password = data.get("password")
-        user = authenticate(email=email, password=password)
-        if not user:
+        
+        # Get user without authenticating first (to check if blocked)
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
             raise serializers.ValidationError("Invalid credentials")
+        
+        # Check if user is blocked
+        if user.blocked_until and user.blocked_until > now():
+            remaining_time = (user.blocked_until - now()).total_seconds() / 60
+            raise serializers.ValidationError(
+                f"Account locked. Try again in {int(remaining_time)} minutes."
+            )
+        
+        # Reset block if time has passed
+        if user.blocked_until and user.blocked_until <= now():
+            user.blocked_until = None
+            user.failed_attempts = 0
+            user.save(update_fields=["blocked_until", "failed_attempts"])
+        
+        # Check user is active
         if not user.is_active:
             raise serializers.ValidationError("User is not active")
-        data["user"] = user
+        
+        # Authenticate with credentials
+        authenticated_user = authenticate(email=email, password=password)
+        
+        if not authenticated_user:
+            # Increment failed attempts
+            user.failed_attempts = (user.failed_attempts or 0) + 1
+            
+            # Lock account if failed attempts reach limit
+            if user.failed_attempts >= 5:
+                user.blocked_until = now() + timedelta(minutes=30)
+                user.save(update_fields=["failed_attempts", "blocked_until"])
+                remaining_time = 30
+                raise serializers.ValidationError(
+                    f"Account locked due to multiple failed login attempts. Try again in {remaining_time} minutes."
+                )
+            else:
+                user.save(update_fields=["failed_attempts"])
+                attempts_left = 5 - user.failed_attempts
+                raise serializers.ValidationError(
+                    f"Invalid credentials. {attempts_left} attempts remaining."
+                )
+        
+        # Login successful - reset failed attempts
+        user.failed_attempts = 0
+        user.blocked_until = None
+        user.save(update_fields=["failed_attempts", "blocked_until"])
+        
+        data["user"] = authenticated_user
         return data

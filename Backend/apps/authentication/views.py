@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -17,12 +17,6 @@ from .serializers import (
 from .token import AccountActivationTokenGenetator, get_tokens_for_user
 
 User = get_user_model()
-
-
-@api_view(["GET"])
-def home(request):
-    return Response({"status": "ok"}, status=status.HTTP_200_OK)
-
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -44,9 +38,10 @@ def register_buyer(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
 def register_seller(request):
     """
-    Register a new seller (RF-16).
+    Register a new seller.
     Creates a User with 'seller' role and a SellerProfile.
     """
     serializer = SellerRegistrationSerializer(data=request.data)
@@ -59,15 +54,9 @@ def register_seller(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-"""
-Here we are using the UserLoginSerializer to validate the user credentials. 
-If the credentials are valid, we generate JWT tokens for the user and return them in the response. 
-If the credentials are invalid, we return a 401 Unauthorized response with the serializer errors.
-"""
-
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([UserRateThrottle])
 def login(request):
     serializer = UserLoginSerializer(data=request.data)
     if serializer.is_valid():
@@ -78,14 +67,53 @@ def login(request):
 
 
 @api_view(["POST"])
+@throttle_classes([UserRateThrottle])
 def logout(request):
+    """
+    Logout endpoint that blacklists the provided refresh token.
+    Requires a refresh token in the request body.
+    """
+    refresh_token = request.data.get("refresh")
+    
+    # Check if refresh token is provided
+    if not refresh_token:
+        return Response(
+            {"detail": "Refresh token is required"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
     try:
-        refresh_token = request.data.get("refresh")
         token = RefreshToken(refresh_token)
         token.blacklist()
-        return Response({"status": "ok"}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "detail": "Successfully logged out",
+                "message": "Your session has been terminated"
+            },
+            status=status.HTTP_205_RESET_CONTENT,
+        )
     except TokenError as e:
-        return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        error_message = str(e)
+        if "token is invalid or expired" in error_message.lower():
+            return Response(
+                {"detail": "Token is invalid or expired"},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        elif "blacklist" in error_message.lower():
+            return Response(
+                {"detail": "Token has already been blacklisted"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        else:
+            return Response(
+                {"detail": "Logout failed. Please try again."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    except Exception as e:
+        return Response(
+            {"detail": "An unexpected error occurred during logout"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
 @api_view(["GET"])

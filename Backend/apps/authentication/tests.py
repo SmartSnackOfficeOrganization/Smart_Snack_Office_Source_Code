@@ -60,7 +60,6 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
         user = User.objects.get()
         self.assertFalse(user.is_active)  # todavía inactivo en este punto
 
-        # Paso 2: extraer el link de activación del cuerpo del email enviado
         self.assertEqual(len(mail.outbox), 1)
         email_body = mail.outbox[0].body
 

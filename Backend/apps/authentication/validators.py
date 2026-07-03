@@ -10,6 +10,7 @@ from .models import User
 class ComplexPasswordValidator:
     """
     Custom password validator.
+    This was implemented as an AUTH_PASSWORD_VALIDATORS on root config.
     """
 
     def validate(self, password, user=None):
