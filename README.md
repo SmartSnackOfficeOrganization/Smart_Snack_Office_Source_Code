@@ -107,7 +107,7 @@ docker logs smartsnack_db
 ```bash
 Main	← código estable, versiones grandes del proyecto (Sprints), lo que está "entregable". Casi nunca se toca directo.
   ↑
-Develop	← rama de integración. Aquí se junta el trabajo de todos. ¡Protegida!: No se puede hacer push directo, todo entra por Pull Request.  El Pull Request necesita al menos 1 aprobación de otro miembro antes de mergear.  El CI debe pasar (los tests y el linter de GitHub Actions en verde) antes de poder mergear.
+Develop	← rama de integración. Aquí se junta el trabajo de todos. (para después) Protegerla: No se puede hacer push directo, todo entra por Pull Request. El Pull Request necesita al menos 1 aprobación de otro miembro antes de mergear. El CI debe pasar (los tests y el linter de GitHub Actions en verde) antes de poder mergear.
   ↑
 feature/HU-001 o issue…     ← una rama por cada HU o issue que alguien esté desarrollando.
 
