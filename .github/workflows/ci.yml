@@ -3,7 +3,7 @@ name: CI — SmartSnack Backend
 # Se dispara en push y PRs hacia develop y main
 on:
   push:
-    branches: [develop, main]
+    branches: [develop, main, feature/*, hotfix/*]
   pull_request:
     branches: [develop, main]
 
