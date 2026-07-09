@@ -110,8 +110,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
         with transaction.atomic():
             product = Product.objects.create(
-                seller=self.context['request'].user,    
-                **validated_data
+                seller=self.context["request"].user, **validated_data
             )
             if nutrition_data:
                 NutritionFact.objects.create(product=product, **nutrition_data)

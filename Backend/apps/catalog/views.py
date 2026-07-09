@@ -1,12 +1,12 @@
 import django_filters
-from rest_framework.exceptions import PermissionDenied, NotFound
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.filters import OrderingFilter
 
 from .models import Product, ProductImage
 from .permissions import IsProductOwner, IsSeller
-from .serializers import ProductSerializer, ProductImageSerializer
+from .serializers import ProductImageSerializer, ProductSerializer
 
 
 class ProductFilter(django_filters.FilterSet):
@@ -57,6 +57,7 @@ class ProductsViewSet(viewsets.ModelViewSet):
 
 class ProductImageViewSet(viewsets.ModelViewSet):
     """ViewSet for managing product images. Only the owner of the product can add, update, or delete images."""
+
     serializer_class = ProductImageSerializer
 
     def get_permissions(self):
