@@ -101,9 +101,17 @@ class ProductSerializer(serializers.ModelSerializer):
         nutrition_data = validated_data.pop("nutrition_facts", None)
         tags_data = validated_data.pop("tags", [])
 
+        # Validar que el contexto y usuario existan
+        request = self.context.get("request")
+        if not request or not request.user or not request.user.is_authenticated:
+            raise serializers.ValidationError(
+                "User authentication is required to create a product"
+            )
+
         with transaction.atomic():
             product = Product.objects.create(
-                seller=self.context["request"].user, **validated_data
+                seller=self.context['request'].user,    
+                **validated_data
             )
             if nutrition_data:
                 NutritionFact.objects.create(product=product, **nutrition_data)
