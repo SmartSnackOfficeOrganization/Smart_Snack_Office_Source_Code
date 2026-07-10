@@ -1,5 +1,6 @@
 import django_filters
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -30,7 +31,6 @@ class ProductFilter(django_filters.FilterSet):
 
 
 class ProductsViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     # Ordering configuration on global config
     filterset_class = ProductFilter
@@ -38,6 +38,19 @@ class ProductsViewSet(viewsets.ModelViewSet):
 
     ordering_fields = ["price", "created_at", "review_count"]
     ordering = ["-created_at", "-review_count"]
+
+    def get_queryset(self):
+        qs = (
+            Product.objects
+            .select_related("category", "nutrition_facts", "seller")
+            .prefetch_related("tags", "images")
+        )
+        user = self.request.user
+        # El vendedor ve lo suyo (aunque esté suspendido); el resto, solo activos
+        # (regla de negocio 9 / RF-29).
+        if user.is_authenticated and getattr(user, "role", None) == "seller":
+            return qs.filter(Q(status="active") | Q(seller=user))
+        return qs.filter(status="active")
 
     def get_permissions(self):
         if self.action == "create":
