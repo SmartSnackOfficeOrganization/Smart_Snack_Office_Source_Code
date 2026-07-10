@@ -95,6 +95,14 @@ docker exec -it smartsnack_backend python manage.py test
 # Ver logs de un servicio
 docker logs smartsnack_backend
 docker logs smartsnack_db
+
+# Aplicar formateo black e isort para que pase CI
+docker exec smartsnack_backend black .
+docker exec smartsnack_backend isort .
+
+# Verifica EXACTAMENTE lo que corre el CI (ambos deben salir en 0):
+docker exec smartsnack_backend black --check .
+docker exec smartsnack_backend isort --check-only .
 ```
 
 ---
