@@ -92,7 +92,7 @@ SIMPLE_JWT = {
 # Environment variable from docker-compose (Backend Service)
 CACHE_LOCATION = os.getenv("CACHE_LOCATION", "cache:6379")
 
-if DEBUG:
+if TESTING:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
