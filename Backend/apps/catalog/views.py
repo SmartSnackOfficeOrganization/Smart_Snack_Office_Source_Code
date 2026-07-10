@@ -1,6 +1,6 @@
 import django_filters
-from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -40,11 +40,9 @@ class ProductsViewSet(viewsets.ModelViewSet):
     ordering = ["-created_at", "-review_count"]
 
     def get_queryset(self):
-        qs = (
-            Product.objects
-            .select_related("category", "nutrition_facts", "seller")
-            .prefetch_related("tags", "images")
-        )
+        qs = Product.objects.select_related(
+            "category", "nutrition_facts", "seller"
+        ).prefetch_related("tags", "images")
         user = self.request.user
         # El vendedor ve lo suyo (aunque esté suspendido); el resto, solo activos
         # (regla de negocio 9 / RF-29).
