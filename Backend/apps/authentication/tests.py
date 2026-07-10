@@ -8,6 +8,7 @@ from .models import BuyerProfile, User
 
 class BuyerRegistrationSuccessFlowTests(APITestCase):
     def setUp(self):
+        # reverse utility is useful for not hardcoding the urls (Brings the url from the url path (declared name))
         self.register_url = reverse("register_buyer")
 
         self.valid_payload = {
@@ -45,7 +46,7 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
         self.assertEqual(profile.user, user)
         self.assertEqual(profile.delivery_address, "Calle 123")
 
-        # 7. Se envió exactamente un email (usando el backend de test de Django,
+        # Se envió exactamente un email (usando el backend de test de Django,
         #    que no manda nada real, solo lo guarda en mail.outbox)
         self.assertEqual(len(mail.outbox), 1)
         sent_email = mail.outbox[0]

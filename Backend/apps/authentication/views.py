@@ -121,6 +121,7 @@ def logout(request):
 @permission_classes([AllowAny])
 def activate_account(request, uidb64, token):
     try:
+        # Here we must send the uid enconded for email verification (code)
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):

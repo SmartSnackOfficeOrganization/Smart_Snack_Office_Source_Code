@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     "apps.authentication",
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    "apps.catalog",
+    "django_filters",
 ]
 
 """
@@ -69,6 +71,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {"anon": "5/hour", "user": "20/day"},
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 24,
 }
 
 TESTING = "test" in sys.argv

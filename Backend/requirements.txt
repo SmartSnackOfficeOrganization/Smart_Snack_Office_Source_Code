@@ -10,3 +10,4 @@ djangorestframework-simplejwt==5.5.0
 isort==5.13.2
 django-redis==7.0.0
 black==25.1.0
+django-filter==24.3
