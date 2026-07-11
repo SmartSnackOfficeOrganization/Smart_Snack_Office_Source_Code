@@ -27,6 +27,7 @@ services:
       - "8000:8000"
     volumes:
       - ./Backend:/app
+      - ./ml:/app/ml
     env_file:
       - ./Backend/.env
     environment:
