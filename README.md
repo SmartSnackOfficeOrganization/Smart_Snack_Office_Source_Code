@@ -2,7 +2,7 @@
 Codigo fuente de la página web.
 
 SOLO SE VA A MANEJAR DE MANERA LOCAL, no se va a desplegar.
-
+Hacer testeo de la feature antes de integrar/mergear a develop, que no se vaya a romper nada.
 ---
 
 
@@ -26,16 +26,12 @@ cp Backend/.env.example Backend/.env
 docker compose up --build
 ```
 
-Cuando termine de levantar, abre el navegador en:
-
-- **Backend (API Django):** http://localhost:8000
 - **Base de datos PostgreSQL:** localhost:5432
 
 ---
 
 ## Variables de entorno para local
 
-El proyecto necesita un archivo `Backend/.env` (NO se sube a Git).
 Usar `Backend/.env.example` como plantilla. Variables requeridas:
 
 | Variable | Descripción | Ejemplo (desarrollo local) |
@@ -45,7 +41,7 @@ Usar `Backend/.env.example` como plantilla. Variables requeridas:
 | `DB_PASSWORD` | Contraseña de PostgreSQL | `dev_password_123` |
 | `DB_HOST` | Host de la base de datos (nombre del servicio en Docker compose) | `db` |
 | `DB_PORT` | Puerto de PostgreSQL | `5432` |
-| `SECRET_KEY` | Clave secreta de Django | `django-insecure-...` |
+| `SECRET_KEY` | Clave secreta de Django | `django-insecure--clave-larga-solo-para-desarrollo` |
 | `DEBUG` | Modo debug (True solo en desarrollo) | `True` |
 | `ALLOWED_HOSTS` | Hosts permitidos, separados por coma | `localhost,127.0.0.1,0.0.0.0` |
 
