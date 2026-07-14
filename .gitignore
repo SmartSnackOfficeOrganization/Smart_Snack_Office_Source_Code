@@ -227,3 +227,9 @@ npm-debug.log*
 
 # Claude
 CLAUDE.MD
+
+# Entorno virtual de Python
+venv/
+.venv/
+env/
+ENV/
