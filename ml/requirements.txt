@@ -1,0 +1,4 @@
+# Dependencia para el motor TF-IDF de la HU-05 (ml/search/tfidf_engine.py).
+# Durante la integración, agregar esta línea a Backend/requirements.txt.
+# scikit-learn arrastra numpy y scipy como dependencias transitivas.
+scikit-learn==1.5.2
