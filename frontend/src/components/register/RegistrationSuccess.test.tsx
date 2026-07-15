@@ -22,10 +22,37 @@ describe("RegistrationSuccess", () => {
     expect(screen.getByText("¡Cuenta creada con éxito!")).toBeInTheDocument();
   });
 
-  it("links to login page", () => {
-    render(<RegistrationSuccess role="buyer" email="test@empresa.com" />);
-    const link = screen.getByRole("link", { name: /iniciar sesión/i });
-    expect(link).toHaveAttribute("href", "/login");
+  it("shows activation button when activationUrl is provided", () => {
+    render(
+      <RegistrationSuccess
+        role="buyer"
+        email="test@empresa.com"
+        activationUrl="http://localhost:8000/api/auth/activate/dGVzdA==/token123"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /activar cuenta/i })).toBeInTheDocument();
+  });
+
+  it("shows inactive message when activationUrl is provided", () => {
+    render(
+      <RegistrationSuccess
+        role="buyer"
+        email="test@empresa.com"
+        activationUrl="http://localhost:8000/api/auth/activate/dGVzdA==/token123"
+      />,
+    );
+    expect(screen.getByText(/tu cuenta está inactiva/i)).toBeInTheDocument();
+  });
+
+  it("shows login link after activation", () => {
+    render(
+      <RegistrationSuccess
+        role="buyer"
+        email="test@empresa.com"
+        activationUrl="http://localhost:8000/api/auth/activate/dGVzdA==/token123"
+      />,
+    );
+    expect(screen.getByRole("button", { name: /activar cuenta/i })).toBeInTheDocument();
   });
 
   it("links to home page", () => {

@@ -31,7 +31,10 @@ def register_buyer(request):
     if serializer.is_valid():
         serializer.save()
         return Response(
-            {"message": "Buyer account created successfully"},
+            {
+                "message": "Buyer account created successfully",
+                "activation_url": getattr(serializer, "_activation_url", None),
+            },
             status=status.HTTP_201_CREATED,
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -49,7 +52,10 @@ def register_seller(request):
     if serializer.is_valid():
         serializer.save()
         return Response(
-            {"message": "Seller account created successfully"},
+            {
+                "message": "Seller account created successfully",
+                "activation_url": getattr(serializer, "_activation_url", None),
+            },
             status=status.HTTP_201_CREATED,
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

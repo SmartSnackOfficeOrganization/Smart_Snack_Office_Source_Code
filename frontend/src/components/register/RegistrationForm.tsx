@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { PasswordCriteriaList } from "@/components/register/PasswordCriteriaList";
 import { RegistrationSuccess } from "@/components/register/RegistrationSuccess";
@@ -35,16 +35,7 @@ export function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!isSuccess) return;
-
-    const timer = window.setTimeout(() => {
-      window.location.href = "/login";
-    }, 5000);
-
-    return () => window.clearTimeout(timer);
-  }, [isSuccess]);
+  const [activationUrl, setActivationUrl] = useState<string | undefined>(undefined);
 
   function updateField<K extends keyof RegistrationFormData>(
     field: K,
@@ -88,6 +79,7 @@ export function RegistrationForm() {
       const result = await register(formData);
 
       if (result.success) {
+        setActivationUrl(result.activationUrl);
         setIsSuccess(true);
       } else if (result.fieldErrors) {
         setErrors((prev) => ({ ...prev, ...result.fieldErrors }));
@@ -104,7 +96,13 @@ export function RegistrationForm() {
   }
 
   if (isSuccess) {
-    return <RegistrationSuccess role={formData.role} email={formData.email.trim()} />;
+    return (
+      <RegistrationSuccess
+        role={formData.role}
+        email={formData.email.trim()}
+        activationUrl={activationUrl}
+      />
+    );
   }
 
   return (

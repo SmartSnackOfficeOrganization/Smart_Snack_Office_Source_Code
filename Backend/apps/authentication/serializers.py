@@ -31,6 +31,17 @@ def send_activation_email(user):
         [user.email],
         fail_silently=False,
     )
+    return activation_link
+
+
+def get_activation_url(user):
+    token_generator = AccountActivationTokenGenetator()
+    uid = urlsafe_base64_encode(force_bytes(user.pk))
+    token = token_generator.make_token(user)
+    activation_path = reverse(
+        "activate_account", kwargs={"uidb64": uid, "token": token}
+    )
+    return urljoin(f"{settings.BACKEND_URL.rstrip('/')}/", activation_path)
 
 
 class BuyerRegistrationSerializer(
@@ -89,6 +100,7 @@ class BuyerRegistrationSerializer(
             )
 
         send_activation_email(user)
+        self._activation_url = get_activation_url(user)
         return user
 
 
@@ -153,6 +165,7 @@ class SellerRegistrationSerializer(
             )
 
         send_activation_email(user)
+        self._activation_url = get_activation_url(user)
         return user
 
 
