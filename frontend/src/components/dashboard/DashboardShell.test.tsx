@@ -101,4 +101,16 @@ describe("DashboardShell", () => {
     const link = screen.getByRole("link", { name: /volver al inicio/i });
     expect(link).toHaveAttribute("href", "/");
   });
+
+  it("renders search bar for buyers", () => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(buyerSession));
+    render(<DashboardShell role="buyer" title="Test" description="Test" />);
+    expect(screen.getByLabelText(/buscar productos/i)).toBeInTheDocument();
+  });
+
+  it("does not render search bar for sellers", () => {
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sellerSession));
+    render(<DashboardShell role="seller" title="Test" description="Test" />);
+    expect(screen.queryByLabelText(/buscar productos/i)).not.toBeInTheDocument();
+  });
 });

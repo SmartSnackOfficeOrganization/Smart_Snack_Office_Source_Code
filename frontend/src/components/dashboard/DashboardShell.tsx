@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
+import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/Button";
 import { clearAuthSession, getAuthSession } from "@/lib/auth/session";
 import { AuthSession } from "@/lib/auth/types";
@@ -32,6 +33,10 @@ export function DashboardShell({ role, title, description }: DashboardShellProps
     router.push("/login");
   }
 
+  function handleSearch(query: string) {
+    router.push(`/buyer/search?q=${encodeURIComponent(query)}`);
+  }
+
   if (!session) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -43,8 +48,9 @@ export function DashboardShell({ role, title, description }: DashboardShellProps
   return (
     <main className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-accent-50">
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
+        <div className="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6">
           <SmartSnackLogo />
+          {role === "buyer" && <SearchBar onSearch={handleSearch} />}
           <Button variant="secondary" onClick={handleLogout}>
             Cerrar sesión
           </Button>

@@ -1,8 +1,16 @@
 # Smart Snack — Frontend
 
-Next.js 15 + Tailwind CSS 4 + TypeScript.
+Next.js 15 + React 19 + Tailwind CSS 4 + TypeScript.
 
 ## Desarrollo local
+
+### Opción 1: Docker (recomendado)
+
+```bash
+docker compose up -d --build frontend
+```
+
+### Opción 2: Node.js local
 
 ```bash
 cd frontend
@@ -11,46 +19,111 @@ cp env.local.example .env.local   # opcional
 npm run dev
 ```
 
-Abre [http://localhost:3000/register](http://localhost:3000/register) para la vista HU-001.
-Abre [http://localhost:3000/login](http://localhost:3000/login) para la vista HU-002.
+### URLs
 
-### Credenciales simuladas (login)
+| Ruta | Descripción |
+|------|-------------|
+| `/register` | HU-001 Registro de usuario |
+| `/login` | HU-002 Login JWT |
+| `/forgot-password` | HU-003 Solicitud de recuperación |
+| `/reset-password/[uidb64]/[token]` | HU-003 Cambio de contraseña |
+| `/activate/[uidb64]/[token]` | Activación de cuenta |
+| `/buyer/dashboard` | Panel del comprador |
+| `/buyer/search` | HU-005 Búsqueda inteligente |
+| `/seller/dashboard` | Panel del vendedor |
+
+## Variables de entorno
+
+| Variable | Descripción | Valor por defecto |
+|----------|-------------|-------------------|
+| `NEXT_PUBLIC_USE_MOCK_AUTH` | Activar mock auth (sin backend) | `false` |
+| `NEXT_PUBLIC_API_URL` | URL del backend Django | `http://localhost:8000` |
+
+## Autenticación
+
+### Conexión a Django API (actual)
+
+El frontend está conectado al backend Django por defecto (`NEXT_PUBLIC_USE_MOCK_AUTH=false`). El flujo de autenticación utiliza JWT con tokens de acceso y refresco.
+
+### Mock auth (desarrollo sin backend)
+
+Para desarrollo sin backend, cambiar `NEXT_PUBLIC_USE_MOCK_AUTH=true` en `.env.local`.
 
 | Rol | Email | Contraseña |
 |-----|-------|------------|
 | Comprador | comprador@empresa.com | ContraseñaSegura123! |
 | Vendedor | vendedor@empresa.com | ContraseñaSegura123! |
 
+## Funcionalidades
+
+### HU-001 — Registro
+
+Formulario con selector de rol (comprador/vendedor), validación de contraseña con criteria en tiempo real, y pantalla de éxito con enlace de activación.
+
+**Ruta:** `/register`
+
+### HU-002 — Login
+
+Autenticación JWT con manejo de errores del backend, redirección por rol a dashboards correspondientes.
+
+**Ruta:** `/login`
+
+### HU-003 — Recuperación de contraseña
+
+Flujo completo en 3 pasos:
+1. **Solicitud** (`/forgot-password`): El usuario ingresa su email
+2. **Redirección automática**: El backend genera un enlace de reset y el frontend lo redirige automáticamente al formulario de cambio
+3. **Cambio** (`/reset-password/[uidb64]/[token]`): Formulario con validación de criteria de contraseña
+
+### HU-005 — Búsqueda inteligente
+
+Barra de búsqueda en el header del panel del comprador. Motor de búsqueda TF-IDF con coincidencia literal y semántica. Resultados paginados con badges de `match_stage` (literal/tfidf).
+
+**Ruta:** `/buyer/search?q=<término>`
+
+### Activación de cuenta
+
+Después del registro, se genera un enlace de activación. El usuario puede activar su cuenta desde la pantalla de éxito o desde el enlace enviado por email.
+
+**Ruta:** `/activate/[uidb64]/[token]`
+
 ## Estructura
 
 ```
 src/
 ├── app/
-│   ├── register/           # HU-001 Registro
-│   ├── login/              # HU-002 Login JWT
-│   ├── buyer/dashboard/    # Panel comprador (placeholder)
-│   └── seller/dashboard/   # Panel vendedor (placeholder)
+│   ├── activate/[uidb64]/[token]/    # Activación de cuenta
+│   ├── buyer/
+│   │   ├── dashboard/                # Panel comprador
+│   │   └── search/                   # HU-005 Búsqueda
+│   ├── forgot-password/              # HU-003 Solicitud reset
+│   ├── login/                        # HU-002 Login JWT
+│   ├── register/                     # HU-001 Registro
+│   ├── reset-password/[uidb64]/[token]/ # HU-003 Cambio contraseña
+│   └── seller/dashboard/             # Panel vendedor
 ├── components/
-│   ├── ui/                 # Button, FormField
-│   ├── layout/             # SmartSnackLogo
-│   ├── register/           # Formulario de registro
-│   ├── login/              # Formulario de login
-│   └── dashboard/          # Shell de paneles
+│   ├── dashboard/                    # DashboardShell
+│   ├── forgot-password/              # ForgotPasswordForm
+│   ├── layout/                       # SmartSnackLogo
+│   ├── login/                        # LoginForm
+│   ├── register/                     # RegistrationForm, RoleSelector, etc.
+│   ├── reset-password/               # ResetPasswordForm
+│   ├── search/                       # SearchBar, SearchResults, NoResults
+│   └── ui/                           # Button, FormField
 └── lib/
-    ├── validation.ts       # Validaciones cliente
-    └── auth/               # Sesión JWT, login simulado/API
-        ├── login.ts
-        ├── session.ts
-        ├── types.ts
-        └── constants.ts
+    ├── auth/
+    │   ├── activation.ts             # API de activación
+    │   ├── apiTransforms.ts          # Mapeo camelCase ↔ snake_case
+    │   ├── constants.ts              # Constantes de auth
+    │   ├── login.ts                  # Lógica de login mock/API
+    │   ├── passwordReset.ts          # Solicitud y cambio de contraseña
+    │   ├── registration.ts           # Registro via API
+    │   ├── session.ts                # Tokens JWT, refresh, logout
+    │   └── types.ts                  # Tipos de auth
+    ├── catalog.ts                    # API de búsqueda de productos
+    ├── catalog.types.ts              # Tipos de catálogo
+    └── validation.ts                 # Validaciones de formularios
 ```
-
-## Autenticación (HU-002)
-
-- **Simulación activa** por defecto (`NEXT_PUBLIC_USE_MOCK_AUTH=true`).
-- Tokens guardados en **localStorage** vía `lib/auth/session.ts` (fácil de migrar a cookies).
-- Redirección por rol: `/buyer/dashboard` o `/seller/dashboard`.
-- Para conectar Django: `NEXT_PUBLIC_USE_MOCK_AUTH=false` y usar `POST /api/auth/login/`.
 
 ## Tests
 
@@ -62,43 +135,49 @@ Configuración automática vía `next/jest`.
 ### Comandos
 
 ```bash
-npm run test            # Ejecutar todos los tests
+npm run test            # Ejecutar todos los tests (213 tests)
 npm run test:watch      # Modo watch (re-ejecuta al guardar)
 npm run test:coverage   # Generar reporte de cobertura
 ```
 
-### Estructura de tests
-
-Los tests siguen la misma estructura que el código fuente:
+### Archivos de test
 
 ```
 src/
 ├── lib/
-│   ├── validation.test.ts              # Validaciones de formularios
-│   └── auth/
-│       ├── types.test.ts               # AuthError class
-│       ├── constants.test.ts           # Constantes de autenticación
-│       ├── session.test.ts             # CRUD de sesión en localStorage
-│       └── login.test.ts              # Lógica de login mock/API
+│   ├── auth/
+│   │   ├── activation.test.ts
+│   │   ├── apiTransforms.test.ts
+│   │   ├── constants.test.ts
+│   │   ├── login.test.ts
+│   │   ├── passwordReset.test.ts
+│   │   ├── registration.test.ts
+│   │   ├── session.test.ts
+│   │   └── types.test.ts
+│   ├── catalog.test.ts
+│   └── validation.test.ts
 ├── components/
-│   ├── ui/
-│   │   ├── Button.test.tsx            # Variantes, fullWidth, disabled
-│   │   └── FormField.test.tsx         # Labels, errors, hints, aria
+│   ├── dashboard/DashboardShell.test.tsx
+│   ├── forgot-password/ForgotPasswordForm.test.tsx
+│   ├── layout/SmartSnackLogo.test.tsx
+│   ├── login/LoginForm.test.tsx
 │   ├── register/
-│   │   ├── RoleSelector.test.tsx      # Radio group de roles
-│   │   ├── PasswordCriteriaList.test.tsx   # Evalúa criteria de contraseña
-│   │   ├── RegistrationSuccess.test.tsx    # Pantalla de éxito
-│   │   └── RegistrationForm.test.tsx       # Flujo completo de registro
-│   ├── login/
-│   │   └── LoginForm.test.tsx         # Flujo completo de login
-│   ├── dashboard/
-│   │   └── DashboardShell.test.tsx    # Auth guard, logout
-│   └── layout/
-│       └── SmartSnackLogo.test.tsx    # Renderizado del logo
+│   │   ├── PasswordCriteriaList.test.tsx
+│   │   ├── RegistrationForm.test.tsx
+│   │   ├── RegistrationSuccess.test.tsx
+│   │   └── RoleSelector.test.tsx
+│   ├── reset-password/ResetPasswordForm.test.tsx
+│   ├── search/
+│   │   ├── NoResults.test.tsx
+│   │   ├── SearchBar.test.tsx
+│   │   └── SearchResults.test.tsx
+│   └── ui/
+│       ├── Button.test.tsx
+│       └── FormField.test.tsx
 └── app/
-    ├── page.test.tsx                  # Home page
-    ├── login/page.test.tsx            # Login page
-    ├── register/page.test.tsx         # Register page
+    ├── page.test.tsx
+    ├── login/page.test.tsx
+    ├── register/page.test.tsx
     ├── buyer/dashboard/page.test.tsx
     └── seller/dashboard/page.test.tsx
 ```
@@ -107,9 +186,9 @@ src/
 
 | Nivel | Qué cubre | Herramienta |
 |---|---|---|
-| Unit tests | Funciones de validación, auth, session, login | Jest |
-| Component tests (UI) | Button, FormField, RoleSelector, etc. | Jest + RTL |
-| Component tests (estado) | LoginForm, RegistrationForm, DashboardShell | Jest + RTL + userEvent |
+| Unit tests | Funciones de validación, auth, session, login, catálogo, transforms | Jest |
+| Component tests (UI) | Button, FormField, RoleSelector, SearchBar, SearchResults, NoResults | Jest + RTL |
+| Component tests (estado) | LoginForm, RegistrationForm, ForgotPasswordForm, ResetPasswordForm, DashboardShell | Jest + RTL + userEvent |
 | Page smoke tests | Exportación de cada página | Jest + RTL |
 
 ### Mocks
@@ -117,5 +196,5 @@ src/
 Los tests utilizan mocks para:
 - **localStorage** — Simular persistencia de sesión
 - **next/navigation** — Verificar redirecciones (useRouter)
-- **fetch** — Simular llamadas API en loginWithApi
+- **fetch** — Simular llamadas API
 - **process.env** — Variables de entorno de Next.js
