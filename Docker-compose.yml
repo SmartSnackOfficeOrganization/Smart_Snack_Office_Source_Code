@@ -71,7 +71,7 @@ services:
       - frontend_next:/app/.next
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
-      - NEXT_PUBLIC_USE_MOCK_AUTH=true
+      - NEXT_PUBLIC_USE_MOCK_AUTH=false
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend

@@ -13,6 +13,8 @@ import {
   RegistrationFormErrors,
   validateRegistrationForm,
 } from "@/lib/validation";
+import { register } from "@/lib/auth/registration";
+import { AuthError } from "@/lib/auth/types";
 
 const initialFormData: RegistrationFormData = {
   role: "buyer",
@@ -32,6 +34,7 @@ export function RegistrationForm() {
   const [touched, setTouched] = useState<Partial<Record<keyof RegistrationFormData, boolean>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSuccess) return;
@@ -61,6 +64,7 @@ export function RegistrationForm() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setAuthError(null);
     setTouched({
       role: true,
       fullName: true,
@@ -80,11 +84,23 @@ export function RegistrationForm() {
 
     setIsSubmitting(true);
 
-    // Simulación del flujo exitoso (integración API: POST /api/auth/register/buyer|seller/)
-    await new Promise((resolve) => setTimeout(resolve, 900));
+    try {
+      const result = await register(formData);
 
-    setIsSubmitting(false);
-    setIsSuccess(true);
+      if (result.success) {
+        setIsSuccess(true);
+      } else if (result.fieldErrors) {
+        setErrors((prev) => ({ ...prev, ...result.fieldErrors }));
+      }
+    } catch (error) {
+      if (error instanceof AuthError) {
+        setAuthError(error.message);
+      } else {
+        setAuthError("Error al crear la cuenta. Intenta de nuevo.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   if (isSuccess) {
@@ -106,6 +122,16 @@ export function RegistrationForm() {
         noValidate
         className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8"
       >
+        {authError && (
+          <div
+            className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            role="alert"
+            aria-live="polite"
+          >
+            {authError}
+          </div>
+        )}
+
         <div className="space-y-6">
           <RoleSelector
             value={formData.role}
