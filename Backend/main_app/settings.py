@@ -113,6 +113,7 @@ else:
     }
 
 BACKEND_URL = os.getenv("BACKEND_URL") or os.getenv("AUTH_URL", "http://localhost:8000")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")

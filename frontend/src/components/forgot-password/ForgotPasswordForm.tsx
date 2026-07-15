@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
-import { requestPasswordReset, GENERIC_SUCCESS_MESSAGE } from "@/lib/auth/passwordReset";
+import { requestPasswordReset } from "@/lib/auth/passwordReset";
 import { AuthError } from "@/lib/auth/types";
 import {
   ForgotPasswordFormData,
@@ -18,6 +19,7 @@ const initialFormData: ForgotPasswordFormData = {
 };
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState<ForgotPasswordFormData>(initialFormData);
   const [fieldErrors, setFieldErrors] = useState<ForgotPasswordFormErrors>({});
   const [touched, setTouched] = useState<Partial<Record<keyof ForgotPasswordFormData, boolean>>>({});
@@ -56,10 +58,15 @@ export function ForgotPasswordForm() {
     setIsSubmitting(true);
 
     try {
-      const message = await requestPasswordReset(formData.email.trim());
-      setSuccessMessage(message);
+      const resetUrl = await requestPasswordReset(formData.email.trim());
+      setSuccessMessage("Enlace enviado. Redirigiendo...");
       setFormData(initialFormData);
       setTouched({});
+      if (resetUrl) {
+        setTimeout(() => {
+          router.push(resetUrl);
+        }, 1500);
+      }
     } catch (error) {
       if (error instanceof AuthError) {
         setAuthError(error.message);

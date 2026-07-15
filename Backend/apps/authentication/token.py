@@ -43,3 +43,8 @@ def verify_token(request):
 class AccountActivationTokenGenetator(PasswordResetTokenGenerator):
     def _make_hash_value(self, user, timestamp):
         return str(user.pk) + str(timestamp) + str(user.is_active)
+
+
+class PasswordResetTokenGenerator(PasswordResetTokenGenerator):
+    def _make_hash_value(self, user, timestamp):
+        return str(user.pk) + str(timestamp) + str(user.password)

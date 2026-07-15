@@ -23,8 +23,9 @@ export function RegistrationSuccess({ role, email, activationUrl }: Registration
     try {
       const url = new URL(activationUrl);
       const pathParts = url.pathname.split("/");
-      const uidb64 = pathParts[2];
-      const token = pathParts[3];
+      const activateIndex = pathParts.indexOf("activate");
+      const uidb64 = pathParts[activateIndex + 1];
+      const token = pathParts[activateIndex + 2];
 
       const result = await activateAccount(uidb64, token);
       setActivated(result.success);

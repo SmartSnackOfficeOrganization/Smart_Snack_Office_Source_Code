@@ -12,7 +12,7 @@ from django.utils.timezone import now
 from rest_framework import serializers
 
 from .models import BuyerProfile, SellerProfile, User
-from .token import AccountActivationTokenGenetator
+from .token import AccountActivationTokenGenetator, PasswordResetTokenGenerator
 from .validators import PasswordValidationMixin, RegistrationValidationMixin
 
 
@@ -239,3 +239,19 @@ class UserLoginSerializer(serializers.Serializer):
 
         data["user"] = authenticated_user
         return data
+
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordConfirmSerializer(serializers.Serializer):
+    uidb64 = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_new_password(self, value):
+        from django.contrib.auth.password_validation import validate_password
+
+        validate_password(value)
+        return value

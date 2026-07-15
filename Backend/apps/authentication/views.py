@@ -1,6 +1,9 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from urllib.parse import urljoin
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
@@ -11,10 +14,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
     BuyerRegistrationSerializer,
+    ForgotPasswordSerializer,
+    ResetPasswordConfirmSerializer,
     SellerRegistrationSerializer,
     UserLoginSerializer,
 )
-from .token import AccountActivationTokenGenetator, get_tokens_for_user
+from .token import AccountActivationTokenGenetator, PasswordResetTokenGenerator, get_tokens_for_user
 
 User = get_user_model()
 
@@ -144,3 +149,81 @@ def activate_account(request, uidb64, token):
         {"detail": "Invalid or expired activation link"},
         status=status.HTTP_400_BAD_REQUEST,
     )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
+def forgot_password(request):
+    serializer = ForgotPasswordSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data["email"]
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            user = None
+
+        if user is not None:
+            token_generator = PasswordResetTokenGenerator()
+            token = token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            frontend_url = settings.FRONTEND_URL.rstrip("/")
+            reset_url = f"{frontend_url}/reset-password/{uid}/{token}/"
+            send_mail(
+                "Restablece tu contraseña",
+                f"Usa este enlace para restablecer tu contraseña: {reset_url}",
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
+                fail_silently=False,
+            )
+            return Response(
+                {
+                    "message": "Si el correo es válido, se envió un enlace de recuperación.",
+                    "reset_url": reset_url,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {"message": "Si el correo es válido, se envió un enlace de recuperación."},
+            status=status.HTTP_200_OK,
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([AnonRateThrottle])
+def reset_password_confirm(request):
+    serializer = ResetPasswordConfirmSerializer(data=request.data)
+    if serializer.is_valid():
+        uidb64 = serializer.validated_data["uidb64"]
+        token = serializer.validated_data["token"]
+        new_password = serializer.validated_data["new_password"]
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is None:
+            return Response(
+                {"error": "token_invalid"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        token_generator = PasswordResetTokenGenerator()
+        if not token_generator.check_token(user, token):
+            return Response(
+                {"error": "token_expired"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+        return Response(
+            {"message": "Contraseña actualizada correctamente."},
+            status=status.HTTP_200_OK,
+        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

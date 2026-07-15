@@ -67,7 +67,7 @@ describe("ForgotPasswordForm", () => {
     await waitFor(
       () => {
         expect(
-          screen.getByText(/si el correo es válido/i),
+          screen.getByText(/enlace enviado/i),
         ).toBeInTheDocument();
       },
       { timeout: 2000 },
