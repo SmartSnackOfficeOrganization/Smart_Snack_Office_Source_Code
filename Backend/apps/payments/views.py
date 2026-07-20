@@ -7,9 +7,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django.http import HttpResponse
 from urllib3 import request
-# Create your views here.
 
-from .services import verify_rapyd_webhook
+from .services import verify_rapyd_webhook, process_payment_webhook
 
 
 @api_view(["POST"])
@@ -28,7 +27,18 @@ def payment_callback(request):
 
     payload = request.data
     print("Webhook recibido de Rapyd:", payload, flush=True)
-    # lógica de negocio (pendiente hasta que exista `orders`)
+    
+    # Procesar el webhook y crear/actualizar el Payment
+    result = process_payment_webhook(payload)
+    
+    if result["status"] == "error":
+        print(f"Error al procesar webhook: {result['message']}", flush=True)
+        return Response(
+            {"detail": "Error al procesar pago", "error": result["message"]},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    print(f"Pago procesado correctamente: {result['payment'].rapyd_payment_id}", flush=True)
     return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
 

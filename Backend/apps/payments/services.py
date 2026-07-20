@@ -8,8 +8,11 @@ import string
 import time
 
 import requests
+from datetime import datetime
+
 from django.conf import settings
 
+from .models import Payment
 
 def _generate_salt(length: int = 12) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -88,3 +91,76 @@ def list_recent_payments() -> dict:
     )
     response.raise_for_status()
     return response.json()
+
+
+def process_payment_webhook(webhook_data: dict) -> dict:
+    """
+    Procesa un webhook de Rapyd y crea/actualiza un Payment en la base de datos.
+    
+    Args:
+        webhook_data: Diccionario con los datos del webhook de Rapyd
+        
+    Returns:
+        Dict con status y el Payment object creado/actualizado
+    """
+
+    
+    # Extraer datos principales del webhook
+    payment_data = webhook_data.get("data", {})
+    payment_id = payment_data.get("id")
+    
+    if not payment_id:
+        return {"status": "error", "message": "No payment ID provided"}
+    
+    try:
+        # Convertir timestamps de Rapyd a datetime
+        rapyd_created_at = datetime.fromtimestamp(payment_data.get("created_at", 0))
+        rapyd_paid_at = None
+        if payment_data.get("paid_at"):
+            rapyd_paid_at = datetime.fromtimestamp(payment_data.get("paid_at"))
+        
+        # Crear o actualizar el Payment
+        payment, created = Payment.objects.update_or_create(
+            rapyd_payment_id=payment_id,
+            defaults={
+                "merchant_reference_id": payment_data.get("merchant_reference_id", ""),
+                "customer_token": payment_data.get("customer_token", ""),
+                "amount": payment_data.get("amount", 0),
+                "original_amount": payment_data.get("original_amount", 0),
+                "currency_code": payment_data.get("currency_code", "COP"),
+                "country_code": payment_data.get("country_code", "CO"),
+                "status": payment_data.get("status", "INIT"),
+                "paid": payment_data.get("paid", False),
+                "refunded": payment_data.get("refunded", False),
+                "refunded_amount": payment_data.get("refunded_amount", 0),
+                "is_partial": payment_data.get("is_partial", False),
+                "description": payment_data.get("description", ""),
+                "payment_method_type": payment_data.get("payment_method_type", ""),
+                "payment_method_data": payment_data.get("payment_method_data"),
+                "auth_code": payment_data.get("auth_code", ""),
+                "authentication_result": payment_data.get("authentication_result"),
+                "redirect_url": payment_data.get("redirect_url", ""),
+                "complete_payment_url": payment_data.get("complete_payment_url", ""),
+                "error_payment_url": payment_data.get("error_payment_url", ""),
+                "failure_code": payment_data.get("failure_code", ""),
+                "failure_message": payment_data.get("failure_message", ""),
+                "ewallet_id": payment_data.get("ewallet_id", ""),
+                "ewallets": payment_data.get("ewallets"),
+                "webhook_metadata": payment_data.get("metadata", {}),
+                "rapyd_created_at": rapyd_created_at,
+                "rapyd_paid_at": rapyd_paid_at,
+            }
+        )
+        
+        return {
+            "status": "success",
+            "created": created,
+            "payment": payment,
+            "message": f"Payment {'created' if created else 'updated'} successfully"
+        }
+    
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error processing payment: {str(e)}"
+        }
