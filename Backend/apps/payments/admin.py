@@ -12,6 +12,7 @@ class PaymentAdmin(admin.ModelAdmin):
     list_display = (
         "merchant_reference_id",
         "rapyd_payment_id_short",
+        "user_display",
         "amount_display",
         "status_badge",
         "paid",
@@ -26,6 +27,7 @@ class PaymentAdmin(admin.ModelAdmin):
         "currency_code",
         "country_code",
         "payment_method_type",
+        "user",
         "created_at",
         "rapyd_created_at",
     )
@@ -51,6 +53,7 @@ class PaymentAdmin(admin.ModelAdmin):
     fieldsets = (
         ("Información General", {
             "fields": (
+                "user",
                 "merchant_reference_id",
                 "rapyd_payment_id",
                 "customer_token",
@@ -125,6 +128,13 @@ class PaymentAdmin(admin.ModelAdmin):
         """Muestra solo los últimos 12 caracteres del ID de pago"""
         return obj.rapyd_payment_id[-12:] if obj.rapyd_payment_id else "-"
     rapyd_payment_id_short.short_description = "Pago ID"
+    
+    def user_display(self, obj):
+        """Muestra el usuario con email"""
+        if obj.user:
+            return f"{obj.user.username} ({obj.user.email})"
+        return "Sin usuario"
+    user_display.short_description = "Usuario"
     
     def amount_display(self, obj):
         """Muestra el monto con formato"""

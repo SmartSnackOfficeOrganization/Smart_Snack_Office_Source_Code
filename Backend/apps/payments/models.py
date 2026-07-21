@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.conf import settings
 
 
 class Payment(models.Model):
@@ -20,6 +21,13 @@ class Payment(models.Model):
         ("SUCCESS", "Exitoso"),
         ("ERROR", "Error"),
     ]
+
+    # Relación con Usuario
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="payments",
+        help_text="Usuario que realizó el pago"
+    )
 
     # Información del pago
     rapyd_payment_id = models.CharField(

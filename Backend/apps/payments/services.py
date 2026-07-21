@@ -39,7 +39,7 @@ def _sign_request(http_method: str, path: str, body_string: str) -> dict:
     }
 
 
-def build_checkout_page(reference: str, amount: float, currency: str, country: str) -> dict:
+def build_checkout_page(reference: str, amount: float, currency: str, country: str, user_id: str = None) -> dict:
     """
     Crea una hosted checkout page en el sandbox de Rapyd.
     Recibe primitivos
@@ -53,6 +53,11 @@ def build_checkout_page(reference: str, amount: float, currency: str, country: s
         "complete_payment_url": f"{settings.BACKEND_URL}/api/payments/complete/",
         "error_payment_url": f"{settings.BACKEND_URL}/api/payments/error/",
     }
+    if user_id:
+        body["metadata"] = {
+            "user_id": str(user_id)
+        }
+
     body_string = json.dumps(body, separators=(",", ":"))
     headers = _sign_request("post", path, body_string)
 
@@ -93,12 +98,13 @@ def list_recent_payments() -> dict:
     return response.json()
 
 
-def process_payment_webhook(webhook_data: dict) -> dict:
+def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
     """
     Procesa un webhook de Rapyd y crea/actualiza un Payment en la base de datos.
     
     Args:
         webhook_data: Diccionario con los datos del webhook de Rapyd
+        user_id: (Opcional) UUID del usuario que realizó el pago
         
     Returns:
         Dict con status y el Payment object creado/actualizado
@@ -119,10 +125,29 @@ def process_payment_webhook(webhook_data: dict) -> dict:
         if payment_data.get("paid_at"):
             rapyd_paid_at = datetime.fromtimestamp(payment_data.get("paid_at"))
         
+        # Determinar el usuario
+        user = None
+        
+        # Primero intenta obtener user_id del webhook metadata
+        metadata = payment_data.get("metadata", {})
+        webhook_user_id = metadata.get("user_id")
+        
+        if webhook_user_id:
+            user_id = webhook_user_id
+        
+        if user_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                pass
+        
         # Crear o actualizar el Payment
         payment, created = Payment.objects.update_or_create(
             rapyd_payment_id=payment_id,
             defaults={
+                "user": user,
                 "merchant_reference_id": payment_data.get("merchant_reference_id", ""),
                 "customer_token": payment_data.get("customer_token", ""),
                 "amount": payment_data.get("amount", 0),
