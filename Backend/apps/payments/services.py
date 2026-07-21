@@ -50,8 +50,8 @@ def build_checkout_page(reference: str, amount: float, currency: str, country: s
         "country": country,
         "currency": currency,
         "merchant_reference_id": reference,
-        "complete_payment_url": f"{settings.BACKEND_URL}/api/payments/complete/",
-        "error_payment_url": f"{settings.BACKEND_URL}/api/payments/error/",
+        "complete_payment_url": "/api/payments/complete/",
+        "error_payment_url": "/api/payments/error/",
     }
     if user_id:
         body["metadata"] = {

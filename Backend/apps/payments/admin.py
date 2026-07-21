@@ -130,11 +130,11 @@ class PaymentAdmin(admin.ModelAdmin):
     rapyd_payment_id_short.short_description = "Pago ID"
     
     def user_display(self, obj):
-        """Muestra el usuario con email"""
+        """Muestra el usuario"""
         if obj.user:
-            return f"{obj.user.username} ({obj.user.email})"
+            return f"{obj.user.full_name} ({obj.user.email})"
         return "Sin usuario"
-    user_display.short_description = "Usuario"
+
     
     def amount_display(self, obj):
         """Muestra el monto con formato"""
