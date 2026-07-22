@@ -14,7 +14,7 @@ export default function LoginPage() {
             </h2>
             <p className="mt-4 text-sm leading-relaxed text-brand-100">
               Compradores gestionan pedidos corporativos; vendedores administran su catálogo.
-              Autenticación con JWT lista para conectar al backend Django.
+              Autenticación con JWT.
             </p>
             <ul className="mt-8 space-y-3 text-sm text-brand-50">
               <li className="flex items-center gap-2">
