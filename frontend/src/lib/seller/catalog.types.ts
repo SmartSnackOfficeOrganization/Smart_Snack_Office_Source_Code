@@ -1,4 +1,15 @@
-﻿export interface NutritionFactsData {
+﻿export interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+export interface Tag {
+  id: string;
+  name: string;
+}
+
+export interface NutritionFactsData {
   calories?: number | null;
   protein_g?: number | null;
   fat_g?: number | null;
@@ -32,7 +43,8 @@ export interface SellerProduct {
   avg_rating: string;
   review_count: number;
   is_featured: boolean;
-  category: string | null;
+  category: Category | null;
+  tags: string[];
   nutrition_facts: NutritionFactsData | null;
   created_at: string;
   updated_at: string;

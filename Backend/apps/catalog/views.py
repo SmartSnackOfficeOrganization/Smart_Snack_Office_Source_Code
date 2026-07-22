@@ -5,9 +5,9 @@ from rest_framework import viewsets
 from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.filters import OrderingFilter
 
-from .models import Product, ProductImage
+from .models import Category, Product, ProductImage, Tag
 from .permissions import IsProductOwner, IsSeller
-from .serializers import ProductImageSerializer, ProductSerializer
+from .serializers import CategorySerializer, ProductImageSerializer, ProductSerializer, TagSerializer
 
 
 class ProductFilter(django_filters.FilterSet):
@@ -102,3 +102,15 @@ class ProductImageViewSet(viewsets.ModelViewSet):
         if instance.product.seller != self.request.user:
             raise PermissionDenied("You can only delete images for your own products")
         instance.delete()
+
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    pagination_class = None
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    pagination_class = None

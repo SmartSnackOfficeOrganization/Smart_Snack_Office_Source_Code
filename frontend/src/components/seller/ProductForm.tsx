@@ -1,13 +1,16 @@
 ﻿"use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import {
+  Category,
   CreateProductData,
   UpdateProductData,
   NutritionFactsData,
+  Tag,
 } from "@/lib/seller/catalog.types";
+import { listCategories, listTags } from "@/lib/seller/catalog";
 
 interface ProductFormProps {
   initialData?: {
@@ -16,6 +19,8 @@ interface ProductFormProps {
     ingredients: string;
     price: number;
     stock: number;
+    category_id?: string;
+    tags?: string[];
     nutrition_facts: NutritionFactsData | null;
   };
   onSubmit: (data: CreateProductData | UpdateProductData) => Promise<void>;
@@ -27,6 +32,8 @@ interface FormErrors {
   name?: string;
   price?: string;
   stock?: string;
+  category_id?: string;
+  tags?: string;
   calories?: string;
   protein_g?: string;
   fat_g?: string;
@@ -46,9 +53,16 @@ export function ProductForm({
   const [ingredients, setIngredients] = useState(initialData?.ingredients ?? "");
   const [price, setPrice] = useState(initialData?.price?.toString() ?? "");
   const [stock, setStock] = useState(initialData?.stock?.toString() ?? "");
+  const [categoryId, setCategoryId] = useState(initialData?.category_id ?? "");
+  const [selectedTags, setSelectedTags] = useState<string[]>(initialData?.tags ?? []);
+  const [tagInput, setTagInput] = useState("");
   const [showNutrition, setShowNutrition] = useState(
     initialData?.nutrition_facts != null,
   );
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(true);
 
   const [calories, setCalories] = useState(
     initialData?.nutrition_facts?.calories?.toString() ?? "",
@@ -76,6 +90,21 @@ export function ProductForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    async function loadOptions() {
+      try {
+        const [cats, tags] = await Promise.all([listCategories(), listTags()]);
+        setCategories(cats);
+        setAvailableTags(tags);
+      } catch {
+        // Options will remain empty; form still works
+      } finally {
+        setLoadingOptions(false);
+      }
+    }
+    void loadOptions();
+  }, []);
+
   function validate(): boolean {
     const newErrors: FormErrors = {};
 
@@ -91,6 +120,14 @@ export function ProductForm({
     const stockNum = parseInt(stock, 10);
     if (stock === "" || isNaN(stockNum) || stockNum < 0) {
       newErrors.stock = "El stock no puede ser negativo.";
+    }
+
+    if (!categoryId) {
+      newErrors.category_id = "Selecciona una categoría.";
+    }
+
+    if (selectedTags.length === 0) {
+      newErrors.tags = "Agrega al menos un tag.";
     }
 
     if (showNutrition) {
@@ -118,6 +155,25 @@ export function ProductForm({
     return Object.keys(newErrors).length === 0;
   }
 
+  function addTag(tagName: string) {
+    const trimmed = tagName.trim();
+    if (trimmed && !selectedTags.includes(trimmed)) {
+      setSelectedTags((prev) => [...prev, trimmed]);
+    }
+    setTagInput("");
+  }
+
+  function removeTag(tagName: string) {
+    setSelectedTags((prev) => prev.filter((t) => t !== tagName));
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(tagInput);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitError(null);
@@ -133,6 +189,8 @@ export function ProductForm({
         ingredients: ingredients.trim() || undefined,
         price: parseFloat(price),
         stock: parseInt(stock, 10),
+        category_id: categoryId,
+        tags: selectedTags,
       };
 
       if (showNutrition) {
@@ -151,12 +209,20 @@ export function ProductForm({
       }
 
       await onSubmit(data);
-    } catch {
-      setSubmitError("Error al guardar. Intenta de nuevo.");
+    } catch (err) {
+      if (err instanceof Error && err.message) {
+        setSubmitError(err.message);
+      } else {
+        setSubmitError("Error al guardar. Intenta de nuevo.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   }
+
+  const filteredTags = availableTags.filter(
+    (t) => !selectedTags.includes(t.name) && t.name.toLowerCase().includes(tagInput.toLowerCase()),
+  );
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
@@ -211,6 +277,80 @@ export function ProductForm({
               value={ingredients}
               onChange={(e) => setIngredients(e.target.value)}
             />
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="category_id" className="block text-sm font-medium text-slate-700">
+              Categoría *
+            </label>
+            <select
+              id="category_id"
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              disabled={loadingOptions}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 disabled:opacity-50"
+            >
+              <option value="">
+                {loadingOptions ? "Cargando categorías…" : "Seleccionar categoría"}
+              </option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            {errors.category_id && (
+              <p className="text-xs text-red-600">{errors.category_id}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="tags" className="block text-sm font-medium text-slate-700">
+              Tags *
+            </label>
+            <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
+              {selectedTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-medium text-brand-700"
+                >
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() => removeTag(tag)}
+                    className="text-brand-500 hover:text-brand-700"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <input
+                id="tags"
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKeyDown}
+                placeholder={selectedTags.length === 0 ? "Escribe y presiona Enter" : ""}
+                className="min-w-[120px] flex-1 bg-transparent py-0.5 text-sm outline-none placeholder:text-slate-400"
+              />
+            </div>
+            {tagInput && filteredTags.length > 0 && (
+              <div className="max-h-32 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-md">
+                {filteredTags.slice(0, 8).map((tag) => (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => addTag(tag.name)}
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-brand-50"
+                  >
+                    {tag.name}
+                  </button>
+                ))}
+              </div>
+            )}
+            {errors.tags && (
+              <p className="text-xs text-red-600">{errors.tags}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">

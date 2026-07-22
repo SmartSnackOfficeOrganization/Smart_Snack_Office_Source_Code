@@ -1,10 +1,12 @@
 ﻿import { getValidAccessToken } from "@/lib/auth/session";
 import { AuthError } from "@/lib/auth/types";
 import {
+  Category,
   CreateProductData,
   UpdateProductData,
   SellerProduct,
   SellerProductListResponse,
+  Tag,
 } from "@/lib/seller/catalog.types";
 
 export class SellerCatalogError extends Error {
@@ -140,6 +142,26 @@ export async function deleteProduct(id: string): Promise<void> {
   }
 
   throw new SellerCatalogError("Error al eliminar el producto.", "UNKNOWN");
+}
+
+export async function listCategories(): Promise<Category[]> {
+  const response = await authFetch(`${getBaseUrl()}/api/catalog/categories/`);
+
+  if (!response.ok) {
+    throw new SellerCatalogError("Error al cargar categorías.", "UNKNOWN");
+  }
+
+  return response.json();
+}
+
+export async function listTags(): Promise<Tag[]> {
+  const response = await authFetch(`${getBaseUrl()}/api/catalog/tags/`);
+
+  if (!response.ok) {
+    throw new SellerCatalogError("Error al cargar tags.", "UNKNOWN");
+  }
+
+  return response.json();
 }
 
 function extractErrorMessage(data: unknown): string {

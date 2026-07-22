@@ -122,6 +122,8 @@ export default function EditProductPage() {
                   ingredients: product.ingredients ?? "",
                   price: parseFloat(product.price),
                   stock: product.stock,
+                  category_id: product.category?.id ?? "",
+                  tags: product.tags ?? [],
                   nutrition_facts: product.nutrition_facts,
                 }}
                 onSubmit={handleSubmit}
