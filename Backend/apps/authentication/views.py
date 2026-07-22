@@ -74,6 +74,7 @@ def login(request):
     if serializer.is_valid():
         user = serializer.validated_data["user"]
         tokens = get_tokens_for_user(user)
+        tokens["role"] = user.role
         return Response(status=status.HTTP_200_OK, data=tokens)
     return Response(serializer.errors, status=status.HTTP_401_UNAUTHORIZED)
 

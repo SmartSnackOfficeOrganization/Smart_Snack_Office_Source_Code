@@ -39,6 +39,7 @@ export class AuthError extends Error {
 export interface LoginApiResponse {
   access: string;
   refresh: string;
+  role: UserRole;
 }
 
 /** Respuesta de error del backend Django */

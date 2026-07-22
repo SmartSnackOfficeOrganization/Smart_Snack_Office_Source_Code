@@ -12,8 +12,11 @@ const GENERIC_LOGIN_ERROR = "Correo o contraseña incorrectos";
 
 function resolveRoleFromApiResponse(
   response: LoginApiResponse,
-  email: string,
 ): UserRole {
+  if (response.role === "buyer" || response.role === "seller") {
+    return response.role;
+  }
+
   const payload = decodeJwtPayload(response.access);
   if (payload && typeof payload.role === "string") {
     const role = payload.role as UserRole;
@@ -22,7 +25,6 @@ function resolveRoleFromApiResponse(
     }
   }
 
-  void email;
   return "buyer";
 }
 
@@ -85,7 +87,7 @@ export async function loginWithApi(credentials: LoginCredentials): Promise<AuthS
   }
 
   const data = (await response.json()) as LoginApiResponse;
-  const role = resolveRoleFromApiResponse(data, credentials.email);
+  const role = resolveRoleFromApiResponse(data);
 
   return {
     access: data.access,
