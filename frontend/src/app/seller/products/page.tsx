@@ -148,7 +148,7 @@ export default function SellerProductsPage() {
                     <p className="text-lg font-bold text-brand-700">${product.price}</p>
                     <p className="text-xs text-slate-400">
                       Stock: {product.stock}
-                      {product.category && ` · ${product.category}`}
+                      {product.category && ` · ${product.category.name}`}
                     </p>
                   </div>
                   <div className="flex gap-2">
