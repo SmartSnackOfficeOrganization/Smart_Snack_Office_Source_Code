@@ -32,19 +32,26 @@ function CatalogPageContent() {
   const buildUrl = useCallback(
     (overrides: Record<string, string>) => {
       const params = new URLSearchParams();
-      const next = { category, tags, price_min: priceMin, price_max: priceMax, ordering, ...overrides };
-      if (inStock) next.inStock = "true";
-      if (next.category) params.set("category", next.category as string);
-      if (next.tags) params.set("tags", next.tags as string);
-      if (next.price_min) params.set("price_min", next.price_min as string);
-      if (next.price_max) params.set("price_max", next.price_max as string);
-      if (inStock) params.set("in_stock", "true");
-      if (next.ordering && next.ordering !== "-created_at") params.set("ordering", next.ordering as string);
-      if (next.page) params.set("page", next.page as string);
+      const cat = overrides.category ?? category;
+      const tg = overrides.tags ?? tags;
+      const pMin = overrides.price_min ?? priceMin;
+      const pMax = overrides.price_max ?? priceMax;
+      const stock = overrides.in_stock != null ? overrides.in_stock : (inStock ? "true" : "");
+      const ord = overrides.ordering ?? ordering;
+      const pg = overrides.page ?? String(page);
+
+      if (cat) params.set("category", cat);
+      if (tg) params.set("tags", tg);
+      if (pMin) params.set("price_min", pMin);
+      if (pMax) params.set("price_max", pMax);
+      if (stock) params.set("in_stock", stock);
+      if (ord && ord !== "-created_at") params.set("ordering", ord);
+      if (pg && pg !== "1") params.set("page", pg);
+
       const qs = params.toString();
       return `/buyer/catalog${qs ? `?${qs}` : ""}`;
     },
-    [category, tags, priceMin, priceMax, inStock, ordering],
+    [category, tags, priceMin, priceMax, inStock, ordering, page],
   );
 
   const fetchProducts = useCallback(async () => {
@@ -99,7 +106,7 @@ function CatalogPageContent() {
   }
 
   function handleInStockChange(value: boolean) {
-    router.push(buildUrl({ ...(value ? { in_stock: "true" } : { in_stock: "" }), page: "1" }));
+    router.push(buildUrl({ in_stock: value ? "true" : "" }));
   }
 
   function handleOrderingChange(value: string) {
