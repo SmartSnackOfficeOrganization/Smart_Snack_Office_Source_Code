@@ -42,12 +42,6 @@ export default function BuyerDashboardPage() {
           title="Explorar catálogo"
           description="Navega por categorías, filtra y ordena productos."
         />
-        <DashboardCard
-          href="/buyer/search"
-          icon="🔎"
-          title="Buscar productos"
-          description="Encuentra snacks por nombre o descripción."
-        />
       </div>
     </DashboardShell>
   );
