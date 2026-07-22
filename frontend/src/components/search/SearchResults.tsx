@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Product } from "@/lib/catalog.types";
 
 interface SearchResultsProps {
@@ -23,7 +24,10 @@ function StarRating({ avgRating }: { avgRating: string }) {
 
 function ProductCard({ product }: { product: Product }) {
   return (
-    <article className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-md transition hover:shadow-lg">
+    <Link
+      href={`/buyer/products/${product.id}`}
+      className="flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-md transition hover:shadow-lg"
+    >
       <div className="flex items-start justify-between gap-2">
         <h3 className="text-base font-semibold text-slate-900">{product.name}</h3>
         {product.is_featured && (
@@ -65,7 +69,7 @@ function ProductCard({ product }: { product: Product }) {
           </span>
         </div>
       )}
-    </article>
+    </Link>
   );
 }
 
