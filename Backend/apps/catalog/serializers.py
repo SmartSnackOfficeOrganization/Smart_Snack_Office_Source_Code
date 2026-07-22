@@ -41,9 +41,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     nutrition_facts = NutritionFactSerializer(required=False, allow_null=True)
-    tags = serializers.SlugRelatedField(
-        many=True, slug_field="name", queryset=Tag.objects.all()
-    )
+    tags = serializers.ListField(child=serializers.CharField(), required=True)
     images = ProductImageSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
@@ -115,7 +113,8 @@ class ProductSerializer(serializers.ModelSerializer):
             if nutrition_data:
                 NutritionFact.objects.create(product=product, **nutrition_data)
 
-            for tag in tags_data:
+            for tag_name in tags_data:
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
                 ProductTag.objects.create(product=product, tag=tag)
         return product
 
@@ -140,7 +139,8 @@ class ProductSerializer(serializers.ModelSerializer):
             # Update tags if provided
             if tags_data is not None:
                 ProductTag.objects.filter(product=instance).delete()
-                for tag in tags_data:
+                for tag_name in tags_data:
+                    tag, _ = Tag.objects.get_or_create(name=tag_name)
                     ProductTag.objects.create(product=instance, tag=tag)
 
         return instance
