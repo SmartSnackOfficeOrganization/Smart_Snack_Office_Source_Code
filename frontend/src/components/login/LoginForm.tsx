@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,7 +7,7 @@ import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { Button } from "@/components/ui/Button";
 import { FormField } from "@/components/ui/FormField";
 import { AuthError } from "@/lib/auth/types";
-import { getDashboardPath, login, MOCK_USERS } from "@/lib/auth/login";
+import { getDashboardPath, login } from "@/lib/auth/login";
 import {
   LoginFormData,
   LoginFormErrors,
@@ -143,22 +143,6 @@ export function LoginForm() {
             </Link>
           </p>
         </div>
-
-        <details className="mt-6 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 text-xs text-slate-500">
-          <summary className="cursor-pointer font-medium text-slate-600">
-            Credenciales de prueba (simulación)
-          </summary>
-          <ul className="mt-2 space-y-1">
-            {MOCK_USERS.map((user) => (
-              <li key={user.email}>
-                <span className="font-medium text-slate-700">
-                  {user.role === "buyer" ? "Comprador" : "Vendedor"}:
-                </span>{" "}
-                {user.email} / {user.password}
-              </li>
-            ))}
-          </ul>
-        </details>
       </form>
     </div>
   );

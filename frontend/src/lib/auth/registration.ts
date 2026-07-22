@@ -1,4 +1,4 @@
-import { AuthError } from "@/lib/auth/types";
+﻿import { AuthError } from "@/lib/auth/types";
 import { RegistrationFormData } from "@/lib/validation";
 import {
   mapRegistrationToApi,
@@ -20,7 +20,7 @@ interface RegistrationApiResponse {
   activation_url?: string;
 }
 
-async function registerWithApi(data: RegistrationFormData): Promise<RegistrationResult> {
+export async function register(data: RegistrationFormData): Promise<RegistrationResult> {
   const url = getRegistrationEndpoint(data.role);
   const payload = mapRegistrationToApi(data);
 
@@ -52,24 +52,6 @@ async function registerWithApi(data: RegistrationFormData): Promise<Registration
   }
 
   throw new AuthError("REGISTRATION_FAILED", GENERIC_REGISTRATION_ERROR);
-}
-
-async function registerWithMock(_data: RegistrationFormData): Promise<RegistrationResult> {
-  void _data;
-  await new Promise((resolve) => setTimeout(resolve, 900));
-  return {
-    success: true,
-    activationUrl: "/activate/dGVzdA==/mock-token-abc123",
-  };
-}
-
-const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH !== "false";
-
-export async function register(data: RegistrationFormData): Promise<RegistrationResult> {
-  if (USE_MOCK_AUTH) {
-    return registerWithMock(data);
-  }
-  return registerWithApi(data);
 }
 
 export { GENERIC_REGISTRATION_ERROR };

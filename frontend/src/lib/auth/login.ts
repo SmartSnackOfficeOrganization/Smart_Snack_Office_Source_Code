@@ -1,4 +1,4 @@
-import { DASHBOARD_ROUTES } from "@/lib/auth/constants";
+﻿import { DASHBOARD_ROUTES } from "@/lib/auth/constants";
 import { saveAuthSession } from "@/lib/auth/session";
 import {
   AuthError,
@@ -10,22 +10,10 @@ import { UserRole } from "@/lib/validation";
 
 const GENERIC_LOGIN_ERROR = "Correo o contraseña incorrectos";
 
-/** Credenciales de prueba mientras la API no está conectada */
-const MOCK_USERS: { email: string; password: string; role: UserRole }[] = [
-  { email: "comprador@empresa.com", password: "ContraseñaSegura123!", role: "buyer" },
-  { email: "vendedor@empresa.com", password: "ContraseñaSegura123!", role: "seller" },
-];
-
-function generateMockToken(prefix: string, role: UserRole): string {
-  const payload = btoa(JSON.stringify({ role, ts: Date.now() }));
-  return `mock.${prefix}.${payload}.smartsnack`;
-}
-
 function resolveRoleFromApiResponse(
   response: LoginApiResponse,
   email: string,
 ): UserRole {
-  // Intentar decodificar el JWT para extraer el role
   const payload = decodeJwtPayload(response.access);
   if (payload && typeof payload.role === "string") {
     const role = payload.role as UserRole;
@@ -34,15 +22,10 @@ function resolveRoleFromApiResponse(
     }
   }
 
-  // Fallback: intentar con GET /api/auth/me/ cuando exista
-  // TODO: implementar cuando el backend tenga el endpoint
   void email;
   return "buyer";
 }
 
-/**
- * Decodifica un JWT para extraer el payload (sin verificar firma).
- */
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const base64Url = token.split(".")[1];
@@ -59,12 +42,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-/**
- * Integración con Django:
- * POST ${NEXT_PUBLIC_API_URL}/api/auth/login/
- * Body: { email, password }
- * Response: { access, refresh }
- */
 export async function loginWithApi(credentials: LoginCredentials): Promise<AuthSession> {
   const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -140,33 +117,8 @@ function extractErrorMessage(data: unknown): string {
   return GENERIC_LOGIN_ERROR;
 }
 
-async function loginWithMock(credentials: LoginCredentials): Promise<AuthSession> {
-  await new Promise((resolve) => setTimeout(resolve, 800));
-
-  const email = credentials.email.trim().toLowerCase();
-  const match = MOCK_USERS.find(
-    (user) => user.email === email && user.password === credentials.password,
-  );
-
-  if (!match) {
-    throw new AuthError("INVALID_CREDENTIALS", GENERIC_LOGIN_ERROR);
-  }
-
-  return {
-    access: generateMockToken("access", match.role),
-    refresh: generateMockToken("refresh", match.role),
-    role: match.role,
-    email: match.email,
-  };
-}
-
-const USE_MOCK_AUTH = process.env.NEXT_PUBLIC_USE_MOCK_AUTH !== "false";
-
 export async function login(credentials: LoginCredentials): Promise<AuthSession> {
-  const session = USE_MOCK_AUTH
-    ? await loginWithMock(credentials)
-    : await loginWithApi(credentials);
-
+  const session = await loginWithApi(credentials);
   saveAuthSession(session);
   return session;
 }
@@ -175,4 +127,4 @@ export function getDashboardPath(role: UserRole): string {
   return DASHBOARD_ROUTES[role];
 }
 
-export { MOCK_USERS, GENERIC_LOGIN_ERROR };
+export { GENERIC_LOGIN_ERROR };

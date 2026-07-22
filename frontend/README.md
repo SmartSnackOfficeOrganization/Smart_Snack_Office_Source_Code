@@ -1,4 +1,4 @@
-# Smart Snack — Frontend
+﻿# Smart Snack — Frontend
 
 Next.js 15 + React 19 + Tailwind CSS 4 + TypeScript.
 
@@ -32,27 +32,30 @@ npm run dev
 | `/buyer/search` | HU-005 Búsqueda inteligente |
 | `/seller/dashboard` | Panel del vendedor |
 
+### Django Admin
+
+| URL | Usuario | Contraseña |
+|-----|---------|------------|
+| http://localhost:8000/admin/ | admin@smartsnack.com | Admin123! |
+
+Panel de administración para gestionar usuarios (compradores/vendedores), perfiles, y catálogo de productos.
+
 ## Variables de entorno
 
 | Variable | Descripción | Valor por defecto |
 |----------|-------------|-------------------|
-| `NEXT_PUBLIC_USE_MOCK_AUTH` | Activar mock auth (sin backend) | `false` |
 | `NEXT_PUBLIC_API_URL` | URL del backend Django | `http://localhost:8000` |
 
 ## Autenticación
 
-### Conexión a Django API (actual)
+El frontend está conectado al backend Django. El flujo de autenticación utiliza JWT con tokens de acceso y refresco.
 
-El frontend está conectado al backend Django por defecto (`NEXT_PUBLIC_USE_MOCK_AUTH=false`). El flujo de autenticación utiliza JWT con tokens de acceso y refresco.
-
-### Mock auth (desarrollo sin backend)
-
-Para desarrollo sin backend, cambiar `NEXT_PUBLIC_USE_MOCK_AUTH=true` en `.env.local`.
-
-| Rol | Email | Contraseña |
-|-----|-------|------------|
-| Comprador | comprador@empresa.com | ContraseñaSegura123! |
-| Vendedor | vendedor@empresa.com | ContraseñaSegura123! |
+- **Registro:** `POST /api/auth/register/buyer/` o `POST /api/auth/register/seller/`
+- **Login:** `POST /api/auth/login/` → retorna `{ access, refresh }`
+- **Logout:** `POST /api/auth/logout/` → blacklisteа el refresh token
+- **Activación:** `GET /api/auth/activate/<uidb64>/<token>/`
+- **Reset contraseña:** `POST /api/auth/password-reset/` → retorna `reset_url`
+- **Confirmar reset:** `POST /api/auth/password-reset/confirm/`
 
 ## Funcionalidades
 
@@ -115,7 +118,7 @@ src/
     │   ├── activation.ts             # API de activación
     │   ├── apiTransforms.ts          # Mapeo camelCase ↔ snake_case
     │   ├── constants.ts              # Constantes de auth
-    │   ├── login.ts                  # Lógica de login mock/API
+    │   ├── login.ts                  # Lógica de login API
     │   ├── passwordReset.ts          # Solicitud y cambio de contraseña
     │   ├── registration.ts           # Registro via API
     │   ├── session.ts                # Tokens JWT, refresh, logout

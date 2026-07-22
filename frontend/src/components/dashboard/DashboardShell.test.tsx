@@ -1,4 +1,4 @@
-import { render, screen, act } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { AuthSession } from "@/lib/auth/types";
@@ -69,13 +69,6 @@ describe("DashboardShell", () => {
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(sellerSession));
     render(<DashboardShell role="seller" title="Test" description="Test" />);
     expect(screen.getByText("Panel Vendedor")).toBeInTheDocument();
-  });
-
-  it("shows JWT token previews", () => {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(buyerSession));
-    render(<DashboardShell role="buyer" title="Test" description="Test" />);
-    expect(screen.getByText(/Access:/)).toBeInTheDocument();
-    expect(screen.getByText(/Refresh:/)).toBeInTheDocument();
   });
 
   it("renders logout button", () => {

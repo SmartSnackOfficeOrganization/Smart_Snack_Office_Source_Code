@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/Button";
@@ -13,9 +13,10 @@ interface DashboardShellProps {
   role: "buyer" | "seller";
   title: string;
   description: string;
+  children?: ReactNode;
 }
 
-export function DashboardShell({ role, title, description }: DashboardShellProps) {
+export function DashboardShell({ role, title, description, children }: DashboardShellProps) {
   const router = useRouter();
   const [session, setSession] = useState<AuthSession | null>(null);
 
@@ -25,7 +26,10 @@ export function DashboardShell({ role, title, description }: DashboardShellProps
       router.replace("/login");
       return;
     }
-    setSession(current);
+    setSession((prev) => {
+      if (prev && prev.access === current.access) return prev;
+      return current;
+    });
   }, [role, router]);
 
   function handleLogout() {
@@ -68,15 +72,7 @@ export function DashboardShell({ role, title, description }: DashboardShellProps
             Sesión activa: <span className="font-medium text-slate-700">{session.email}</span>
           </p>
 
-          <div className="mt-8 rounded-2xl bg-slate-50 p-4 text-xs text-slate-500">
-            <p className="font-semibold text-slate-700">Tokens JWT (simulados)</p>
-            <p className="mt-2 break-all">
-              <span className="font-medium">Access:</span> {session.access.slice(0, 48)}…
-            </p>
-            <p className="mt-1 break-all">
-              <span className="font-medium">Refresh:</span> {session.refresh.slice(0, 48)}…
-            </p>
-          </div>
+          {children && <div className="mt-8">{children}</div>}
 
           <Link
             href="/"
