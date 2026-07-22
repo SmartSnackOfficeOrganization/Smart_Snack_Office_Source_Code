@@ -10,7 +10,7 @@ export default function HomePage() {
         <h1 className="mt-4 text-3xl font-bold text-slate-900 sm:text-4xl">
           Snacks saludables para tu oficina
         </h1>
-        <p className="mt-2 max-w-md text-slate-600">
+        <p className="mx-auto mt-2 max-w-md text-slate-600">
           Bienestar corporativo con energía. Crea tu cuenta para empezar.
         </p>
       </div>
