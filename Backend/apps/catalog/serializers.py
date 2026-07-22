@@ -39,9 +39,22 @@ class ProductImageSerializer(serializers.ModelSerializer):
         read_only_fields = ["id"]
 
 
+class TagsField(serializers.Field):
+    def to_internal_value(self, data):
+        if not isinstance(data, list):
+            raise serializers.ValidationError("Se espera una lista de strings.")
+        for item in data:
+            if not isinstance(item, str):
+                raise serializers.ValidationError("Cada tag debe ser un string.")
+        return data
+
+    def to_representation(self, value):
+        return [tag.name for tag in value.all()]
+
+
 class ProductSerializer(serializers.ModelSerializer):
     nutrition_facts = NutritionFactSerializer(required=False, allow_null=True)
-    tags = serializers.ListField(child=serializers.CharField(), required=True)
+    tags = TagsField(required=True)
     images = ProductImageSerializer(many=True, read_only=True)
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
