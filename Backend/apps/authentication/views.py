@@ -1,9 +1,10 @@
+from urllib.parse import urljoin
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from urllib.parse import urljoin
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny
@@ -19,7 +20,11 @@ from .serializers import (
     SellerRegistrationSerializer,
     UserLoginSerializer,
 )
-from .token import AccountActivationTokenGenetator, PasswordResetTokenGenerator, get_tokens_for_user
+from .token import (
+    AccountActivationTokenGenetator,
+    PasswordResetTokenGenerator,
+    get_tokens_for_user,
+)
 
 User = get_user_model()
 

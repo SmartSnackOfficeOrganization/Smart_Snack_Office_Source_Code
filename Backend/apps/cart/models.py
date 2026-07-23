@@ -1,6 +1,8 @@
-from django.db import models
 import uuid
+
 from django.conf import settings
+from django.db import models
+
 from apps.catalog.models import Product
 
 
@@ -13,7 +15,7 @@ class Cart(models.Model):
 
     class Meta:
         db_table = "carts"
-    
+
 
 class CartItem(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -21,7 +23,9 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(help_text=">= 1")
     unit_price = models.DecimalField(
-        max_digits=10, decimal_places=2, help_text="Price of the product at the time it was added to the cart"
+        max_digits=10,
+        decimal_places=2,
+        help_text="Price of the product at the time it was added to the cart",
     )
 
     class Meta:

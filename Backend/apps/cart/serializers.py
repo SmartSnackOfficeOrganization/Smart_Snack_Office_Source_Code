@@ -1,9 +1,11 @@
-from rest_framework import serializers
-from apps.catalog.serializers import ProductSerializer
-from apps.catalog.models import Product
 from django.db import transaction
+from rest_framework import serializers
+
+from apps.catalog.models import Product
+from apps.catalog.serializers import ProductSerializer
 
 from .models import Cart, CartItem
+
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
@@ -18,9 +20,11 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def validate_quantity(self, value):
         if value < 1:
-            raise serializers.ValidationError("Quantity must be greater than or equal to 1.")
+            raise serializers.ValidationError(
+                "Quantity must be greater than or equal to 1."
+            )
         return value
-    
+
     def create(self, validated_data):
         cart = self.context["cart"]
         product = validated_data["product"]
@@ -30,9 +34,11 @@ class CartItemSerializer(serializers.ModelSerializer):
             # Lock cart row to avoid duplicate cart-product writes in concurrent requests.
             Cart.objects.select_for_update().get(pk=cart.pk)
 
-            existing_item = CartItem.objects.select_for_update().filter(
-                cart=cart, product=product
-            ).first()
+            existing_item = (
+                CartItem.objects.select_for_update()
+                .filter(cart=cart, product=product)
+                .first()
+            )
             if existing_item:
                 new_quantity = existing_item.quantity + quantity
                 if new_quantity > product.stock:
@@ -65,7 +71,9 @@ class CartItemSerializer(serializers.ModelSerializer):
         return instance
 
     def validate(self, data):
-        product = data.get("product") or (self.instance.product if self.instance else None)
+        product = data.get("product") or (
+            self.instance.product if self.instance else None
+        )
         quantity = data.get("quantity")
 
         if product and quantity is not None and quantity > product.stock:
@@ -87,4 +95,3 @@ class CartItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Quantity exceeds available stock.")
 
         return data
-
