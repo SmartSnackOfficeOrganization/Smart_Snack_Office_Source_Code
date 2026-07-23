@@ -79,7 +79,7 @@ export function DashboardShell({ role, title, description, children }: Dashboard
           {children && <div className="mt-8">{children}</div>}
 
           <Link
-            href="/"
+            href={`/${role}/dashboard`}
             className="mt-6 inline-block text-sm font-semibold text-brand-700 hover:underline"
           >
             ← Volver al inicio

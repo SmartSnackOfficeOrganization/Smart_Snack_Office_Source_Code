@@ -1,21 +1,25 @@
 import io
 
-from django.http import HttpResponse
-
 from django.db.models import Prefetch
+from django.http import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Order, OrderItem
-from .pdf_utils import generate_shipping_labels_pdf
+from .pdf_utils import generate_receipt_pdf, generate_shipping_labels_pdf
 from .serializers import OrderSerializer
 
 
 class IsSeller(IsAuthenticated):
     def has_permission(self, request, view):
         return super().has_permission(request, view) and request.user.role == "seller"
+
+
+class IsBuyer(IsAuthenticated):
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.role == "buyer"
 
 
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
@@ -72,5 +76,37 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
             content_type="application/pdf",
             headers={
                 "Content-Disposition": "attachment; filename=etiquetas_envio.pdf",
+            },
+        )
+
+
+class BuyerOrderViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [IsBuyer]
+
+    def get_queryset(self):
+        return (
+            Order.objects.filter(buyer=self.request.user)
+            .prefetch_related("items")
+            .order_by("-created_at")
+        )
+
+    def list(self, request, *args, **kwargs):
+        status_filter = request.query_params.get("status")
+        queryset = self.get_queryset()
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"], url_path="receipt")
+    def receipt(self, request, pk=None):
+        order = self.get_object()
+        pdf_buffer = generate_receipt_pdf(order)
+        return HttpResponse(
+            pdf_buffer.getvalue(),
+            content_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=comprobante_{order.id}.pdf",
             },
         )

@@ -2,10 +2,11 @@ from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
 from . import views
-from .order_views import OrderViewSet
+from .order_views import BuyerOrderViewSet, OrderViewSet
 
 router = SimpleRouter()
 router.register(r"orders", OrderViewSet, basename="orders")
+router.register(r"my-orders", BuyerOrderViewSet, basename="my-orders")
 
 urlpatterns = [
     path("register/buyer/", views.register_buyer, name="register_buyer"),

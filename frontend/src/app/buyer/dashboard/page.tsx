@@ -35,12 +35,18 @@ export default function BuyerDashboardPage() {
       title="Bienvenido a tu panel de comprador"
       description="Aquí podrás explorar el catálogo, gestionar pedidos corporativos y configurar entregas a tu oficina."
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardCard
           href="/buyer/catalog"
           icon="🔍"
           title="Explorar catálogo"
           description="Navega por categorías, filtra y ordena productos."
+        />
+        <DashboardCard
+          href="/buyer/orders"
+          icon="📋"
+          title="Mis pedidos"
+          description="Historial de compras y descarga de comprobantes."
         />
         <DashboardCard
           href="/buyer/profile"
