@@ -5,6 +5,8 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
+from apps.catalog.models import Product
+
 
 class UserManager(BaseUserManager):
     def normalize_email(self, email):
@@ -103,7 +105,7 @@ class SellerProfile(models.Model):
 # 3. COMPRAS, CARRITO Y METAS
 # ==========================================
 
-"""
+
 # ==========================================
 # 4. REQUISICIONES, ÓRDENES Y PAGOS
 # ==========================================
@@ -155,6 +157,9 @@ class OrderItem(models.Model):
     class Meta:
         db_table = "order_items"
         unique_together = (("order", "product"),)
+
+
+"""
 
 
 class PaymentTransaction(models.Model):

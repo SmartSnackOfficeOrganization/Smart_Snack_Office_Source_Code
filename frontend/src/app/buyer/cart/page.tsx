@@ -11,9 +11,9 @@ import {
   updateCartItemQuantity,
   removeCartItem,
   clearCart,
+  checkout,
   CartError,
 } from "@/lib/cart";
-import { initiateCheckout, CheckoutError } from "@/lib/payments/checkout";
 import { CartItem } from "@/lib/cart.types";
 
 export default function CartPage() {
@@ -89,11 +89,11 @@ export default function CartPage() {
     setCheckoutError(null);
     setCheckoutLoading(true);
     try {
-      const { checkout_url } = await initiateCheckout(subtotal, "COP");
-      window.location.href = checkout_url;
+      await checkout();
+      router.push("/buyer/dashboard");
     } catch (err) {
       const msg =
-        err instanceof CheckoutError
+        err instanceof CartError
           ? err.message
           : "Error al procesar el pago. Intenta de nuevo.";
       setCheckoutError(msg);
@@ -199,7 +199,7 @@ export default function CartPage() {
                 onClick={handleCheckout}
                 disabled={checkoutLoading}
               >
-                {checkoutLoading ? "Redirigiendo…" : "Proceder al pago"}
+                {checkoutLoading ? "Confirmando pedido…" : "Proceder al pago"}
               </Button>
             </div>
           </div>

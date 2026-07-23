@@ -35,12 +35,18 @@ export default function SellerDashboardPage() {
       title="Panel de vendedor"
       description="Administra tu catálogo de snacks y optimiza tu presencia en Smart Snack."
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardCard
           href="/seller/products"
           icon="📦"
           title="Gestionar catálogo"
           description="Crea, edita y elimina productos con fichas nutricionales."
+        />
+        <DashboardCard
+          href="/seller/orders"
+          icon="📋"
+          title="Gestionar pedidos"
+          description="Revisa órdenes confirmadas y genera etiquetas de envío."
         />
         <DashboardCard
           href="#"

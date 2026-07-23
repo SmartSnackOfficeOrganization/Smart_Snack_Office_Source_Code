@@ -1,6 +1,11 @@
 from django.urls import include, path
+from rest_framework.routers import SimpleRouter
 
 from . import views
+from .order_views import OrderViewSet
+
+router = SimpleRouter()
+router.register(r"orders", OrderViewSet, basename="orders")
 
 urlpatterns = [
     path("register/buyer/", views.register_buyer, name="register_buyer"),
@@ -15,4 +20,4 @@ urlpatterns = [
         name="reset_password_confirm",
     ),
     path("profile/", views.manage_profile, name="manage_profile"),
-]
+] + router.urls

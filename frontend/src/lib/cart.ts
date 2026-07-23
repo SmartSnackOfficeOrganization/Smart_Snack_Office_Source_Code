@@ -127,6 +127,48 @@ export async function clearCart(): Promise<{
   }
 }
 
+export interface CheckoutResponse {
+  id: string;
+  status: string;
+  delivery_address: string;
+  subtotal: string;
+  tax: string;
+  total: string;
+  items: Array<{
+    product_name: string;
+    quantity: number;
+    unit_price: string;
+    subtotal: string;
+  }>;
+  created_at: string;
+}
+
+export async function checkout(): Promise<CheckoutResponse> {
+  try {
+    const response = await fetch(`${getBaseUrl()}/api/cart/items/checkout/`, {
+      method: "POST",
+      headers: await authHeaders(),
+    });
+    if (response.status === 401 || response.status === 403) {
+      throw new CartError("Debes iniciar sesión como comprador.", "AUTH");
+    }
+    if (response.status === 400) {
+      const data = await response.json();
+      const msg =
+        typeof data === "string"
+          ? data
+          : data.detail || "Error al confirmar el pedido.";
+      throw new CartError(msg, "UNKNOWN");
+    }
+    if (!response.ok)
+      throw new CartError("Error al confirmar el pedido.", "UNKNOWN");
+    return response.json();
+  } catch (err) {
+    if (err instanceof CartError) throw err;
+    throw new CartError("Error de conexión. Intenta de nuevo.", "NETWORK");
+  }
+}
+
 export async function getCartCount(): Promise<number> {
   try {
     const data = await getCartItems();
