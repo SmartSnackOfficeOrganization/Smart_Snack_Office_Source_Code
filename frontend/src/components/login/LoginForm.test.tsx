@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+﻿import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { LoginForm } from "@/components/login/LoginForm";
 
@@ -7,12 +7,33 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockFetch = jest.fn();
+global.fetch = mockFetch;
+
 beforeEach(() => {
   mockPush.mockClear();
+  mockFetch.mockClear();
   localStorage.clear();
 });
 
 afterEach(() => localStorage.clear());
+
+function mockLoginSuccess(role: "buyer" | "seller") {
+  const payload = btoa(JSON.stringify({ role, exp: Date.now() / 1000 + 3600 }));
+  mockFetch.mockResolvedValue({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({ access: `real.${payload}.token`, refresh: "real.refresh.token" }),
+  });
+}
+
+function mockLoginFailure() {
+  mockFetch.mockResolvedValue({
+    ok: false,
+    status: 401,
+    json: () => Promise.resolve({ non_field_errors: ["Correo o contraseña incorrectos"] }),
+  });
+}
 
 describe("LoginForm", () => {
   it("renders email and password fields", () => {
@@ -36,14 +57,8 @@ describe("LoginForm", () => {
     expect(screen.getByText("La contraseña es obligatoria.")).toBeInTheDocument();
   });
 
-  it("shows mock credentials in details section", () => {
-    render(<LoginForm />);
-    expect(screen.getByText(/credenciales de prueba/i)).toBeInTheDocument();
-    expect(screen.getByText(/comprador@empresa\.com/)).toBeInTheDocument();
-    expect(screen.getByText(/vendedor@empresa\.com/)).toBeInTheDocument();
-  });
-
   it("navigates to buyer dashboard on successful buyer login", async () => {
+    mockLoginSuccess("buyer");
     const user = userEvent.setup();
     render(<LoginForm />);
 
@@ -58,6 +73,7 @@ describe("LoginForm", () => {
   });
 
   it("navigates to seller dashboard on successful seller login", async () => {
+    mockLoginSuccess("seller");
     const user = userEvent.setup();
     render(<LoginForm />);
 
@@ -72,6 +88,7 @@ describe("LoginForm", () => {
   });
 
   it("shows auth error on invalid credentials", async () => {
+    mockLoginFailure();
     const user = userEvent.setup();
     render(<LoginForm />);
 
@@ -86,6 +103,7 @@ describe("LoginForm", () => {
   });
 
   it("clears auth error when user types in a field", async () => {
+    mockLoginFailure();
     const user = userEvent.setup();
     render(<LoginForm />);
 
@@ -103,6 +121,7 @@ describe("LoginForm", () => {
   });
 
   it("button shows loading text during submission", async () => {
+    mockLoginSuccess("buyer");
     const user = userEvent.setup();
     render(<LoginForm />);
 

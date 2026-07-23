@@ -1,6 +1,23 @@
-import { render, screen, waitFor } from "@testing-library/react";
+﻿import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { RegistrationForm } from "@/components/register/RegistrationForm";
+
+jest.mock("@/lib/auth/registration", () => ({
+  register: jest.fn(),
+}));
+
+import { register } from "@/lib/auth/registration";
+const mockRegister = register as jest.MockedFunction<typeof register>;
+
+beforeEach(() => {
+  mockRegister.mockClear();
+});
+
+function mockSuccess() {
+  mockRegister.mockImplementation(
+    () => new Promise((resolve) => setTimeout(() => resolve({ success: true, activationUrl: "/activate/abc123/token456" }), 100)),
+  );
+}
 
 describe("RegistrationForm", () => {
   it("renders all form fields for buyer role", () => {
@@ -60,6 +77,7 @@ describe("RegistrationForm", () => {
   });
 
   it("shows success screen after valid submission", async () => {
+    mockSuccess();
     const user = userEvent.setup();
     render(<RegistrationForm />);
 
@@ -77,6 +95,7 @@ describe("RegistrationForm", () => {
   });
 
   it("button shows submitting text during submission", async () => {
+    mockSuccess();
     const user = userEvent.setup();
     render(<RegistrationForm />);
 
