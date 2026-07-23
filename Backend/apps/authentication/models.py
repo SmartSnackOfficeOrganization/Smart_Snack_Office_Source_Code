@@ -103,58 +103,6 @@ class SellerProfile(models.Model):
 # ==========================================
 
 """
-class NutritionalGoal(models.Model):
-    NUTRIENT_CHOICES = [
-        ("sugar", "Sugar"),
-        ("protein", "Protein"),
-        ("sodium", "Sodium"),
-        ("fat", "Fat"),
-        ("calories", "Calories"),
-    ]
-    UNIT_CHOICES = [("g", "g"), ("mg", "mg"), ("kcal", "kcal")]
-    PERIOD_CHOICES = [("daily", "Daily"), ("weekly", "Weekly")]
-
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    buyer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="nutritional_goals",
-    )
-    nutrient = models.CharField(max_length=50, choices=NUTRIENT_CHOICES)
-    target = models.DecimalField(max_digits=10, decimal_places=2)
-    unit = models.CharField(max_length=10, choices=UNIT_CHOICES)
-    period = models.CharField(max_length=10, choices=PERIOD_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = "nutritional_goals"
-
-
-class Cart(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    buyer = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cart"
-    )
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = "carts"
-
-
-class CartItem(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.IntegerField(help_text=">= 1")
-    unit_price = models.DecimalField(
-        max_digits=10, decimal_places=2, help_text="Precio al momento de añadir"
-    )
-
-    class Meta:
-        db_table = "cart_items"
-        unique_together = (("cart", "product"),)
-
-
 # ==========================================
 # 4. REQUISICIONES, ÓRDENES Y PAGOS
 # ==========================================

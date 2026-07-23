@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "apps.catalog",
     "django_filters",
     "apps.ai_engine",
+    "apps.cart",
 ]
 
 """
