@@ -42,6 +42,12 @@ export default function BuyerDashboardPage() {
           title="Explorar catálogo"
           description="Navega por categorías, filtra y ordena productos."
         />
+        <DashboardCard
+          href="/buyer/profile"
+          icon="⚙️"
+          title="Mi Perfil"
+          description="Configura tus alergias y restricciones dietéticas."
+        />
       </div>
     </DashboardShell>
   );

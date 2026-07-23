@@ -12,6 +12,7 @@ urlpatterns = [
     path(
         "password-reset/confirm/",
         views.reset_password_confirm,
-        name="password_reset_confirm",
+        name="reset_password_confirm",
     ),
+    path("profile/", views.manage_profile, name="manage_profile"),
 ]

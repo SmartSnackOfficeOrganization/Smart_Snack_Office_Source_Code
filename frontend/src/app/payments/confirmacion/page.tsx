@@ -47,7 +47,7 @@ export default function PaymentConfirmationPage() {
 
         if (["ERR", "CAN", "EXP", "ERROR"].includes(data.status)) {
           let message = data.failure_message || "Ocurrió un error al procesar el pago.";
-          if (data.code === 403 || String(data.failure_message).includes("403")) {
+          if (String(data.failure_message).includes("403")) {
             message += " (Si el error es 403, logearse primero con el usuario, datos en /payments/management/commands/test_initiate_checkout.py)";
           }
           setErrorMessage(message);

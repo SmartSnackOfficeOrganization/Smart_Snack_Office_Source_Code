@@ -14,11 +14,13 @@ from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .serializers import (
+    BuyerProfileSerializer,
     BuyerRegistrationSerializer,
     ForgotPasswordSerializer,
     ResetPasswordConfirmSerializer,
     SellerRegistrationSerializer,
     UserLoginSerializer,
+    UserProfileSerializer,
 )
 from .token import (
     AccountActivationTokenGenetator,
@@ -232,4 +234,30 @@ def reset_password_confirm(request):
             {"message": "Contraseña actualizada correctamente."},
             status=status.HTTP_200_OK,
         )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["GET", "PATCH"])
+@throttle_classes([UserRateThrottle])
+def manage_profile(request):
+    user = request.user
+    if user.role == "buyer":
+        profile = getattr(user, "buyer_profile", None)
+    else:
+        return Response(
+            {"detail": "Solo los compradores tienen perfil de alergias."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    if request.method == "GET":
+        user_data = UserProfileSerializer(user).data
+        profile_data = BuyerProfileSerializer(profile).data if profile else {}
+        return Response({**user_data, **profile_data})
+
+    serializer = BuyerProfileSerializer(profile, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        user_data = UserProfileSerializer(user).data
+        profile_data = BuyerProfileSerializer(profile).data
+        return Response({**user_data, **profile_data})
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

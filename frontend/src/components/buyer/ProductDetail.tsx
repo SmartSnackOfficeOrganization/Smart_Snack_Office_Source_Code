@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SellerProduct } from "@/lib/seller/catalog.types";
 import { Button } from "@/components/ui/Button";
+import { addToCart, CartError } from "@/lib/cart";
 
 interface ProductDetailProps {
   product: SellerProduct;
@@ -66,7 +67,37 @@ function NutritionTable({
 
 export function ProductDetail({ product }: ProductDetailProps) {
   const [nutritionOpen, setNutritionOpen] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const [allergyError, setAllergyError] = useState<string | null>(null);
   const isOutOfStock = product.stock <= 0;
+
+  async function handleAddToCart() {
+    setAddingToCart(true);
+    setCartMessage(null);
+    setAllergyError(null);
+    try {
+      await addToCart(product.id, 1);
+      setCartMessage("Agregado al carrito ✓");
+      setTimeout(() => setCartMessage(null), 2000);
+    } catch (err) {
+      if (err instanceof CartError && err.code === "ALLERGY") {
+        const allergens = err.allergens?.join(", ") || "alérgenos";
+        setAllergyError(
+          `No se puede agregar este producto. Contiene ${allergens}, que está en tus restricciones. Configura tus alergias desde Mi Perfil.`,
+        );
+      } else {
+        const msg =
+          err instanceof CartError
+            ? err.message
+            : "Error al agregar al carrito.";
+        setCartMessage(msg);
+        setTimeout(() => setCartMessage(null), 3000);
+      }
+    } finally {
+      setAddingToCart(false);
+    }
+  }
 
   return (
     <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-md sm:p-8">
@@ -171,8 +202,16 @@ export function ProductDetail({ product }: ProductDetailProps) {
       </div>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <Button fullWidth disabled={isOutOfStock}>
-          {isOutOfStock ? "Agotado" : "Agregar al carrito"}
+        <Button
+          fullWidth
+          disabled={isOutOfStock || addingToCart}
+          onClick={handleAddToCart}
+        >
+          {isOutOfStock
+            ? "Agotado"
+            : addingToCart
+              ? "Agregando…"
+              : "Agregar al carrito"}
         </Button>
         <Button
           variant="secondary"
@@ -182,6 +221,36 @@ export function ProductDetail({ product }: ProductDetailProps) {
           Agregar a lista de deseos
         </Button>
       </div>
+
+      {allergyError && (
+        <div
+          className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          role="alert"
+        >
+          <p className="font-semibold">Producto bloqueado</p>
+          <p className="mt-1">{allergyError}</p>
+          <button
+            type="button"
+            onClick={() => setAllergyError(null)}
+            className="mt-2 text-xs font-medium underline transition hover:text-red-800"
+          >
+            Entendido
+          </button>
+        </div>
+      )}
+
+      {cartMessage && (
+        <p
+          className={`mt-3 text-center text-sm ${
+            cartMessage.includes("✓")
+              ? "text-brand-700"
+              : "text-red-600"
+          }`}
+          role="alert"
+        >
+          {cartMessage}
+        </p>
+      )}
     </div>
   );
 }

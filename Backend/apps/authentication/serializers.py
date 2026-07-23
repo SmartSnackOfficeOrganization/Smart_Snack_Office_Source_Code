@@ -255,3 +255,15 @@ class ResetPasswordConfirmSerializer(serializers.Serializer):
 
         validate_password(value)
         return value
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["email", "full_name", "role"]
+
+
+class BuyerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BuyerProfile
+        fields = ["delivery_address", "company_name", "allergies"]

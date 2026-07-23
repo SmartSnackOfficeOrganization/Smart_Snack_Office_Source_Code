@@ -85,6 +85,23 @@ class CartItemSerializer(serializers.ModelSerializer):
             and quantity is not None
             and self.context.get("cart")
         ):
+            buyer = self.context["request"].user
+            profile = getattr(buyer, "buyer_profile", None)
+            if profile and profile.allergies:
+                product_tags = list(product.tags.values_list("name", flat=True))
+                matched = [
+                    tag
+                    for tag in profile.allergies
+                    if tag.lower() in [t.lower() for t in product_tags]
+                ]
+                if matched:
+                    raise serializers.ValidationError(
+                        {
+                            "detail": "No se puede agregar este producto. Contiene alérgenos que están en tus restricciones.",
+                            "allergens": matched,
+                        }
+                    )
+
             existing_quantity = (
                 CartItem.objects.filter(cart=self.context["cart"], product=product)
                 .values_list("quantity", flat=True)

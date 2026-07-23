@@ -230,8 +230,8 @@ CORS_ALLOW_CREDENTIALS = True
 # ==========================================
 # RAPYD (pasarela de pago - sandbox)
 # ==========================================
-RAPYD_ACCESS_KEY = os.environ.get("RAPYD_ACCESS_KEY")
-RAPYD_SECRET_KEY = os.environ.get("RAPYD_SECRET_KEY")
+RAPYD_ACCESS_KEY = os.environ.get("RAPYD_ACCESS_KEY", "")
+RAPYD_SECRET_KEY = os.environ.get("RAPYD_SECRET_KEY", "")
 RAPYD_BASE_URL = os.environ.get("RAPYD_BASE_URL", "https://sandboxapi.rapyd.net")
 
 # Ajuste para que build_absolute_url devuelva https:// en vez de http:// cuando se accede desde el frontend (Next.js)

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { Button } from "@/components/ui/Button";
+import { CartIconButton } from "@/components/cart/CartIconButton";
 import { ProductDetail } from "@/components/buyer/ProductDetail";
 import { getProductById, BuyerProductError } from "@/lib/buyer";
 import { SellerProduct } from "@/lib/seller/catalog.types";
@@ -42,15 +43,18 @@ export default function ProductDetailPage() {
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
           <SmartSnackLogo />
-          <Button variant="secondary" onClick={() => router.push("/buyer/dashboard")}>
-            Volver al panel
-          </Button>
+          <div className="flex items-center gap-2">
+            <CartIconButton />
+            <Button variant="secondary" onClick={() => router.push("/buyer/dashboard")}>
+              Volver al panel
+            </Button>
+          </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <Link
-          href="/buyer/search"
+          href="/buyer/catalog"
           className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
         >
           ← Volver al catálogo

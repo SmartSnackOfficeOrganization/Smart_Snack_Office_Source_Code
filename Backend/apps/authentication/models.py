@@ -78,6 +78,7 @@ class BuyerProfile(models.Model):
     )
     delivery_address = models.TextField(blank=True, null=True)
     company_name = models.CharField(max_length=200, blank=True, null=True)
+    allergies = models.JSONField(default=list, blank=True)
 
     class Meta:
         db_table = "buyer_profiles"

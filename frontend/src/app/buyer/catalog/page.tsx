@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { Button } from "@/components/ui/Button";
+import { CartIconButton } from "@/components/cart/CartIconButton";
 import { FilterSidebar } from "@/components/catalog/FilterSidebar";
 import { SortSelect } from "@/components/catalog/SortSelect";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
@@ -118,9 +119,12 @@ function CatalogPageContent() {
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
           <SmartSnackLogo />
-          <Button variant="secondary" onClick={() => router.push("/buyer/dashboard")}>
-            Volver al panel
-          </Button>
+          <div className="flex items-center gap-2">
+            <CartIconButton />
+            <Button variant="secondary" onClick={() => router.push("/buyer/dashboard")}>
+              Volver al panel
+            </Button>
+          </div>
         </div>
       </header>
 

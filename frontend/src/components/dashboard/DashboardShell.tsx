@@ -6,6 +6,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { SearchBar } from "@/components/search/SearchBar";
 import { Button } from "@/components/ui/Button";
+import { CartIconButton } from "@/components/cart/CartIconButton";
 import { clearAuthSession, getAuthSession } from "@/lib/auth/session";
 import { AuthSession } from "@/lib/auth/types";
 
@@ -55,9 +56,12 @@ export function DashboardShell({ role, title, description, children }: Dashboard
         <div className="mx-auto grid max-w-5xl grid-cols-[auto_1fr_auto] items-center gap-4 px-4 py-4 sm:px-6">
           <SmartSnackLogo />
           {role === "buyer" && <SearchBar onSearch={handleSearch} />}
-          <Button variant="secondary" onClick={handleLogout}>
-            Cerrar sesión
-          </Button>
+          <div className="flex items-center gap-2 justify-self-end">
+            {role === "buyer" && <CartIconButton />}
+            <Button variant="secondary" onClick={handleLogout}>
+              Cerrar sesión
+            </Button>
+          </div>
         </div>
       </header>
 

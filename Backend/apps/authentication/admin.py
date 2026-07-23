@@ -7,7 +7,7 @@ class BuyerProfileInline(admin.StackedInline):
     model = BuyerProfile
     can_delete = False
     verbose_name_plural = "Buyer Profile"
-    fields = ("delivery_address", "company_name")
+    fields = ("delivery_address", "company_name", "allergies")
 
 
 class SellerProfileInline(admin.StackedInline):
@@ -85,7 +85,7 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(BuyerProfile)
 class BuyerProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "company_name", "delivery_address")
+    list_display = ("user", "company_name", "delivery_address", "allergies")
     search_fields = ("user__email", "company_name")
 
 
