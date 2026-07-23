@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import logging
 import os
 import sys
 from datetime import timedelta
@@ -79,6 +80,9 @@ REST_FRAMEWORK = {
 }
 
 TESTING = "test" in sys.argv
+if "test" in sys.argv:
+    LOGGING_CONFIG = None
+    logging.disable(logging.CRITICAL)
 
 AUTH_USER_MODEL = "authentication.User"
 
