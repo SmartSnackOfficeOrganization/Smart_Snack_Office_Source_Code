@@ -1,17 +1,20 @@
 import base64
 import hashlib
 import hmac
-from unittest.mock import MagicMock, patch
 import json
-from rest_framework import status
-from rest_framework.test import APITestCase
-from .models import Payment
-from django.test import TestCase, override_settings
-from .services import build_checkout_page, verify_rapyd_webhook, process_payment_webhook
-from django.utils import timezone
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
+from django.test import TestCase, override_settings
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.test import APITestCase
+
+from .models import Payment
+from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook
+
 User = get_user_model()
+
 
 @override_settings(
     RAPYD_ACCESS_KEY="test_access",
@@ -23,7 +26,9 @@ class BuildCheckoutPageTests(TestCase):
     @patch("apps.payments.services.requests.post")
     def test_sends_correct_payload_and_signed_headers(self, mock_post):
         mock_post.return_value = MagicMock(
-            json=lambda: {"data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}}
+            json=lambda: {
+                "data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}
+            }
         )
         mock_post.return_value.raise_for_status = lambda: None
 
@@ -31,7 +36,9 @@ class BuildCheckoutPageTests(TestCase):
             reference="ORD-123", amount=45000, currency="COP", country="CO"
         )
 
-        self.assertEqual(result["data"]["redirect_url"], "https://sandboxcheckout.rapyd.net/xyz")
+        self.assertEqual(
+            result["data"]["redirect_url"], "https://sandboxcheckout.rapyd.net/xyz"
+        )
         headers = mock_post.call_args.kwargs["headers"]
         self.assertEqual(headers["access_key"], "test_access")
         self.assertIn("signature", headers)
@@ -40,15 +47,21 @@ class BuildCheckoutPageTests(TestCase):
 @override_settings(RAPYD_ACCESS_KEY="test_access", RAPYD_SECRET_KEY="test_secret")
 class VerifyRapydWebhookTests(TestCase):
     def _sign(self, url_path, salt, timestamp, body_string):
-        to_sign = url_path + salt + timestamp + "test_access" + "test_secret" + body_string
-        hex_digest = hmac.new(b"test_secret", to_sign.encode(), hashlib.sha256).hexdigest()
+        to_sign = (
+            url_path + salt + timestamp + "test_access" + "test_secret" + body_string
+        )
+        hex_digest = hmac.new(
+            b"test_secret", to_sign.encode(), hashlib.sha256
+        ).hexdigest()
         return base64.b64encode(hex_digest.encode()).decode()
 
     def test_valid_signature_is_accepted(self):
         body = '{"status":"CLO"}'
         sig = self._sign("api/payments/callback/", "abc123", "1700000000", body)
         self.assertTrue(
-            verify_rapyd_webhook("api/payments/callback/", "abc123", "1700000000", body, sig)
+            verify_rapyd_webhook(
+                "api/payments/callback/", "abc123", "1700000000", body, sig
+            )
         )
 
     def test_tampered_body_is_rejected(self):
@@ -56,12 +69,24 @@ class VerifyRapydWebhookTests(TestCase):
         sig = self._sign("api/payments/callback/", "abc123", "1700000000", body)
         tampered_body = '{"status":"ERR"}'
         self.assertFalse(
-            verify_rapyd_webhook("api/payments/callback/", "abc123", "1700000000", tampered_body, sig)
+            verify_rapyd_webhook(
+                "api/payments/callback/", "abc123", "1700000000", tampered_body, sig
+            )
         )
 
-def _sign(url_path, salt, timestamp, body_string, access_key="test_access", secret_key="test_secret"):
+
+def _sign(
+    url_path,
+    salt,
+    timestamp,
+    body_string,
+    access_key="test_access",
+    secret_key="test_secret",
+):
     to_sign = url_path + salt + timestamp + access_key + secret_key + body_string
-    hex_digest = hmac.new(secret_key.encode(), to_sign.encode(), hashlib.sha256).hexdigest()
+    hex_digest = hmac.new(
+        secret_key.encode(), to_sign.encode(), hashlib.sha256
+    ).hexdigest()
     return base64.b64encode(hex_digest.encode()).decode()
 
 
@@ -159,31 +184,46 @@ class PaymentCallbackViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(Payment.objects.count(), 0)
 
-@override_settings(RAPYD_ACCESS_KEY="test_access", RAPYD_SECRET_KEY="test_secret", RAPYD_BASE_URL="https://sandboxapi.rapyd.net")
+
+@override_settings(
+    RAPYD_ACCESS_KEY="test_access",
+    RAPYD_SECRET_KEY="test_secret",
+    RAPYD_BASE_URL="https://sandboxapi.rapyd.net",
+)
 class InitiateCheckoutViewTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            email="buyer@test.com", full_name="Buyer", role="buyer",
-            password="ClaveSegura123", is_active=True,
+            email="buyer@test.com",
+            full_name="Buyer",
+            role="buyer",
+            password="ClaveSegura123",
+            is_active=True,
         )
         self.url = "/api/payments/checkout/"
 
     @patch("apps.payments.views.build_checkout_page")
     def test_authenticated_user_can_initiate_checkout(self, mock_build):
-        mock_build.return_value = {"data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}}
+        mock_build.return_value = {
+            "data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}
+        }
         self.client.force_authenticate(user=self.user)
 
         response = self.client.post(self.url, {"amount": "45000.00"}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("reference", response.data)
-        self.assertEqual(response.data["checkout_url"], "https://sandboxcheckout.rapyd.net/xyz")
+        self.assertEqual(
+            response.data["checkout_url"], "https://sandboxcheckout.rapyd.net/xyz"
+        )
         mock_build.assert_called_once()
         self.assertEqual(mock_build.call_args.kwargs["user_id"], self.user.id)
 
     def test_anonymous_cannot_initiate_checkout(self):
         response = self.client.post(self.url, {"amount": "45000.00"}, format="json")
-        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+        self.assertIn(
+            response.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
 
     def test_rejects_zero_amount(self):
         self.client.force_authenticate(user=self.user)
@@ -194,8 +234,11 @@ class InitiateCheckoutViewTests(APITestCase):
 class CheckoutStatusViewTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            email="buyer2@test.com", full_name="Buyer", role="buyer",
-            password="ClaveSegura123", is_active=True,
+            email="buyer2@test.com",
+            full_name="Buyer",
+            role="buyer",
+            password="ClaveSegura123",
+            is_active=True,
         )
         self.url = "/api/payments/status/ORD-ABC123/"
 
@@ -224,8 +267,11 @@ class CheckoutStatusViewTests(APITestCase):
 
     def test_other_user_cannot_see_someone_elses_payment(self):
         other_user = User.objects.create_user(
-            email="other@test.com", full_name="Other", role="buyer",
-            password="ClaveSegura123", is_active=True,
+            email="other@test.com",
+            full_name="Other",
+            role="buyer",
+            password="ClaveSegura123",
+            is_active=True,
         )
         Payment.objects.create(
             user=other_user,

@@ -6,7 +6,9 @@ import json
 import random
 import string
 import time
-from datetime import datetime, timezone as dt_timezone
+from datetime import datetime
+from datetime import timezone as dt_timezone
+
 import requests
 from django.conf import settings
 
@@ -21,11 +23,18 @@ def _sign_request(http_method: str, path: str, body_string: str) -> dict:
     salt = _generate_salt()
     timestamp = str(int(time.time()))
     to_sign = (
-        http_method.lower() + path + salt + timestamp
-        + settings.RAPYD_ACCESS_KEY + settings.RAPYD_SECRET_KEY + body_string
+        http_method.lower()
+        + path
+        + salt
+        + timestamp
+        + settings.RAPYD_ACCESS_KEY
+        + settings.RAPYD_SECRET_KEY
+        + body_string
     )
     hex_digest = hmac.new(
-        settings.RAPYD_SECRET_KEY.encode("utf-8"), to_sign.encode("utf-8"), hashlib.sha256
+        settings.RAPYD_SECRET_KEY.encode("utf-8"),
+        to_sign.encode("utf-8"),
+        hashlib.sha256,
     ).hexdigest()
     signature = base64.b64encode(hex_digest.encode("utf-8")).decode("utf-8")
 
@@ -71,19 +80,30 @@ def build_checkout_page(
     headers = _sign_request("post", path, body_string)
 
     response = requests.post(
-        f"{settings.RAPYD_BASE_URL}{path}", headers=headers, data=body_string, timeout=10
+        f"{settings.RAPYD_BASE_URL}{path}",
+        headers=headers,
+        data=body_string,
+        timeout=10,
     )
     response.raise_for_status()
     return response.json()
 
 
-def verify_rapyd_webhook(url_path: str, salt: str, timestamp: str, body_string: str, received_signature: str) -> bool:
+def verify_rapyd_webhook(
+    url_path: str, salt: str, timestamp: str, body_string: str, received_signature: str
+) -> bool:
     to_sign = (
-        url_path + salt + timestamp
-        + settings.RAPYD_ACCESS_KEY + settings.RAPYD_SECRET_KEY + body_string
+        url_path
+        + salt
+        + timestamp
+        + settings.RAPYD_ACCESS_KEY
+        + settings.RAPYD_SECRET_KEY
+        + body_string
     )
     hex_digest = hmac.new(
-        settings.RAPYD_SECRET_KEY.encode("utf-8"), to_sign.encode("utf-8"), hashlib.sha256
+        settings.RAPYD_SECRET_KEY.encode("utf-8"),
+        to_sign.encode("utf-8"),
+        hashlib.sha256,
     ).hexdigest()
     computed = base64.b64encode(hex_digest.encode("utf-8")).decode("utf-8")
 
@@ -93,7 +113,9 @@ def verify_rapyd_webhook(url_path: str, salt: str, timestamp: str, body_string: 
 def get_payment_status(payment_id: str) -> dict:
     path = f"/v1/payments/{payment_id}"
     headers = _sign_request("get", path, "")
-    response = requests.get(f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10)
+    response = requests.get(
+        f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10
+    )
     response.raise_for_status()
     return response.json()
 
@@ -101,7 +123,9 @@ def get_payment_status(payment_id: str) -> dict:
 def list_recent_payments() -> dict:
     path = "/v1/payments"
     headers = _sign_request("get", path, "")
-    response = requests.get(f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10)
+    response = requests.get(
+        f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10
+    )
     response.raise_for_status()
     return response.json()
 
@@ -110,15 +134,18 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
     payment_data = webhook_data.get("data", {})
     payment_id = payment_data.get("id")
 
-
     if not payment_id:
         return {"status": "error", "message": "No payment ID provided"}
 
     try:
-        rapyd_created_at = datetime.fromtimestamp(payment_data.get("created_at", 0), tz=dt_timezone.utc)
+        rapyd_created_at = datetime.fromtimestamp(
+            payment_data.get("created_at", 0), tz=dt_timezone.utc
+        )
         rapyd_paid_at = None
         if payment_data.get("paid_at"):
-            rapyd_paid_at = datetime.fromtimestamp(payment_data.get("paid_at"), tz=dt_timezone.utc)
+            rapyd_paid_at = datetime.fromtimestamp(
+                payment_data.get("paid_at"), tz=dt_timezone.utc
+            )
 
         user = None
         metadata = payment_data.get("metadata", {})
@@ -126,6 +153,7 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
 
         if webhook_user_id:
             from django.contrib.auth import get_user_model
+
             User = get_user_model()
             try:
                 user = User.objects.get(id=webhook_user_id)

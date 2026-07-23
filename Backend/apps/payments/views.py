@@ -6,11 +6,7 @@ import requests as requests_lib
 from django.conf import settings
 from django.http import HttpResponse
 from rest_framework import status
-from rest_framework.decorators import (
-    api_view,
-    permission_classes,
-    throttle_classes,
-)
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
@@ -93,7 +89,11 @@ def checkout_status(request, reference):
     if not payment:
         return Response({"reference": reference, "status": "pending"})
 
-    if payment.user_id and payment.user_id != request.user.id and not request.user.is_staff:
+    if (
+        payment.user_id
+        and payment.user_id != request.user.id
+        and not request.user.is_staff
+    ):
         return Response({"detail": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
     return Response(PaymentStatusSerializer(payment).data)
@@ -113,7 +113,9 @@ def payment_callback(request):
 
     if not verify_rapyd_webhook(full_url, salt, timestamp, body_string, signature):
         logger.warning("Firma inválida del webhook")
-        return Response({"detail": "Firma inválida"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(
+            {"detail": "Firma inválida"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
     payload = request.data
     result = process_payment_webhook(payload)

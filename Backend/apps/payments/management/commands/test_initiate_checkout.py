@@ -1,4 +1,3 @@
-
 import requests
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
@@ -31,7 +30,9 @@ class Command(BaseCommand):
         if created:
             user.set_password("MockPass123")
             user.save()
-            self.stdout.write(self.style.SUCCESS(f"✓ Usuario mock creado: {user.email}"))
+            self.stdout.write(
+                self.style.SUCCESS(f"✓ Usuario mock creado: {user.email}")
+            )
         else:
             self.stdout.write(f"Usando usuario mock existente: {user.email}")
 
@@ -48,7 +49,9 @@ class Command(BaseCommand):
         )
 
         if response.status_code != 201:
-            self.stdout.write(self.style.ERROR(f"✗ Error {response.status_code}: {response.text}"))
+            self.stdout.write(
+                self.style.ERROR(f"✗ Error {response.status_code}: {response.text}")
+            )
             return
 
         data = response.json()
