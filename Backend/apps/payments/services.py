@@ -6,13 +6,12 @@ import json
 import random
 import string
 import time
-
+from datetime import datetime, timezone as dt_timezone
 import requests
-from datetime import datetime
-
 from django.conf import settings
 
 from .models import Payment
+
 
 def _generate_salt(length: int = 12) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -39,10 +38,20 @@ def _sign_request(http_method: str, path: str, body_string: str) -> dict:
     }
 
 
-def build_checkout_page(reference: str, amount: float, currency: str, country: str, user_id: str = None) -> dict:
+def build_checkout_page(
+    reference: str,
+    amount: float,
+    currency: str,
+    country: str,
+    user_id: str = None,
+    complete_url: str = None,
+    error_url: str = None,
+) -> dict:
     """
     Crea una hosted checkout page en el sandbox de Rapyd.
-    Recibe primitivos
+    complete_url/error_url son opcionales: si no se pasan, Rapyd
+    redirige de vuelta a su propia página de checkout (sin tocar tu
+    backend/ngrok). Pásalos cuando quieras redirigir al frontend real.
     """
     path = "/v1/checkout"
     body = {
@@ -50,13 +59,13 @@ def build_checkout_page(reference: str, amount: float, currency: str, country: s
         "country": country,
         "currency": currency,
         "merchant_reference_id": reference,
-        "complete_payment_url": "/api/payments/complete/",
-        "error_payment_url": "/api/payments/error/",
     }
+    if complete_url:
+        body["complete_payment_url"] = complete_url
+    if error_url:
+        body["error_payment_url"] = error_url
     if user_id:
-        body["metadata"] = {
-            "user_id": str(user_id)
-        }
+        body["metadata"] = {"user_id": str(user_id)}
 
     body_string = json.dumps(body, separators=(",", ":"))
     headers = _sign_request("post", path, body_string)
@@ -77,73 +86,52 @@ def verify_rapyd_webhook(url_path: str, salt: str, timestamp: str, body_string: 
         settings.RAPYD_SECRET_KEY.encode("utf-8"), to_sign.encode("utf-8"), hashlib.sha256
     ).hexdigest()
     computed = base64.b64encode(hex_digest.encode("utf-8")).decode("utf-8")
+
     return hmac.compare_digest(computed, received_signature)
+
 
 def get_payment_status(payment_id: str) -> dict:
     path = f"/v1/payments/{payment_id}"
     headers = _sign_request("get", path, "")
-    response = requests.get(
-        f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10
-    )
+    response = requests.get(f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10)
     response.raise_for_status()
     return response.json()
+
 
 def list_recent_payments() -> dict:
     path = "/v1/payments"
     headers = _sign_request("get", path, "")
-    response = requests.get(
-        f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10
-    )
+    response = requests.get(f"{settings.RAPYD_BASE_URL}{path}", headers=headers, timeout=10)
     response.raise_for_status()
     return response.json()
 
 
 def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
-    """
-    Procesa un webhook de Rapyd y crea/actualiza un Payment en la base de datos.
-    
-    Args:
-        webhook_data: Diccionario con los datos del webhook de Rapyd
-        user_id: (Opcional) UUID del usuario que realizó el pago
-        
-    Returns:
-        Dict con status y el Payment object creado/actualizado
-    """
-
-    
-    # Extraer datos principales del webhook
     payment_data = webhook_data.get("data", {})
     payment_id = payment_data.get("id")
-    
+
+
     if not payment_id:
         return {"status": "error", "message": "No payment ID provided"}
-    
+
     try:
-        # Convertir timestamps de Rapyd a datetime
-        rapyd_created_at = datetime.fromtimestamp(payment_data.get("created_at", 0))
+        rapyd_created_at = datetime.fromtimestamp(payment_data.get("created_at", 0), tz=dt_timezone.utc)
         rapyd_paid_at = None
         if payment_data.get("paid_at"):
-            rapyd_paid_at = datetime.fromtimestamp(payment_data.get("paid_at"))
-        
-        # Determinar el usuario
+            rapyd_paid_at = datetime.fromtimestamp(payment_data.get("paid_at"), tz=dt_timezone.utc)
+
         user = None
-        
-        # Primero intenta obtener user_id del webhook metadata
         metadata = payment_data.get("metadata", {})
-        webhook_user_id = metadata.get("user_id")
-        
+        webhook_user_id = metadata.get("user_id") or user_id
+
         if webhook_user_id:
-            user_id = webhook_user_id
-        
-        if user_id:
             from django.contrib.auth import get_user_model
             User = get_user_model()
             try:
-                user = User.objects.get(id=user_id)
+                user = User.objects.get(id=webhook_user_id)
             except User.DoesNotExist:
                 pass
-        
-        # Crear o actualizar el Payment
+
         payment, created = Payment.objects.update_or_create(
             rapyd_payment_id=payment_id,
             defaults={
@@ -171,21 +159,18 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
                 "failure_message": payment_data.get("failure_message", ""),
                 "ewallet_id": payment_data.get("ewallet_id", ""),
                 "ewallets": payment_data.get("ewallets"),
-                "webhook_metadata": payment_data.get("metadata", {}),
+                "webhook_metadata": metadata,
                 "rapyd_created_at": rapyd_created_at,
                 "rapyd_paid_at": rapyd_paid_at,
-            }
+            },
         )
-        
+
         return {
             "status": "success",
             "created": created,
             "payment": payment,
-            "message": f"Payment {'created' if created else 'updated'} successfully"
+            "message": f"Payment {'created' if created else 'updated'} successfully",
         }
-    
+
     except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Error processing payment: {str(e)}"
-        }
+        return {"status": "error", "message": f"Error processing payment: {str(e)}"}

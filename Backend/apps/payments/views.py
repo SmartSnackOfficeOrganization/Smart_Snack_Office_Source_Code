@@ -1,62 +1,136 @@
+# apps/payments/views.py
 import logging
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-from django.http import HttpResponse
+import uuid
 
-from .services import verify_rapyd_webhook, process_payment_webhook
-logger = logging.getLogger(__name__)
+import requests as requests_lib
+from django.conf import settings
+from django.http import HttpResponse
+from rest_framework import status
 from rest_framework.decorators import (
     api_view,
     permission_classes,
     throttle_classes,
 )
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
+
+from .models import Payment
+from .serializers import InitiateCheckoutSerializer, PaymentStatusSerializer
+from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook
+
+logger = logging.getLogger(__name__)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@throttle_classes([UserRateThrottle])
+def initiate_checkout(request):
+    """
+    Crea una hosted checkout page en Rapyd para el usuario autenticado.
+
+    Hoy recibe el monto directamente en el body (mientras `orders` no
+    existe). Cuando esa app exista, este endpoint puede evolucionar a
+    recibir un `order_id`, validar que le pertenece a request.user,
+    tomar el total de ahí, y crear el `Order` en estado pending_payment
+    antes de llamar a Rapyd — sin cambiar la forma de `build_checkout_page`.
+    """
+    serializer = InitiateCheckoutSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    data = serializer.validated_data
+
+    reference = data.get("reference") or f"ORD-{uuid.uuid4().hex[:12].upper()}"
+
+    complete_url = None
+    error_url = None
+    frontend_url = getattr(settings, "FRONTEND_URL", None)
+    if frontend_url:
+        complete_url = f"{frontend_url}/checkout/confirmacion?reference={reference}"
+        error_url = f"{frontend_url}/checkout/error?reference={reference}"
+
+    try:
+        result = build_checkout_page(
+            reference=reference,
+            amount=float(data["amount"]),
+            currency=data["currency"],
+            country=data["country"],
+            user_id=request.user.id,
+            complete_url=complete_url,
+            error_url=error_url,
+        )
+    except requests_lib.exceptions.RequestException:
+        logger.exception("Error creando checkout en Rapyd para reference=%s", reference)
+        return Response(
+            {"detail": "No se pudo iniciar el pago, intenta de nuevo"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    return Response(
+        {
+            "reference": reference,
+            "checkout_url": result["data"]["redirect_url"],
+        },
+        status=status.HTTP_201_CREATED,
+    )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def checkout_status(request, reference):
+    """
+    El frontend hace polling aquí después de que Rapyd redirige al
+    comprador de vuelta — el webhook puede no haber llegado todavía.
+    """
+    payment = (
+        Payment.objects.filter(merchant_reference_id=reference)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if not payment:
+        return Response({"reference": reference, "status": "pending"})
+
+    if payment.user_id and payment.user_id != request.user.id and not request.user.is_staff:
+        return Response({"detail": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
+
+    return Response(PaymentStatusSerializer(payment).data)
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
 @throttle_classes([])
 def payment_callback(request):
-    logger.info("=" * 50)
-    logger.info("=== WEBHOOK RECIBIDO ===")
-    logger.info(f"Method: {request.method}")
-    logger.info(f"Headers: {request.headers}")
-    logger.info(f"Body: {request.body}")
+    logger.info("=== WEBHOOK RECIBIDO === method=%s", request.method)
 
     signature = request.headers.get("signature", "")
     salt = request.headers.get("salt", "")
     timestamp = request.headers.get("timestamp", "")
     body_string = request.body.decode("utf-8")
-
     full_url = request.build_absolute_uri()
 
-    
     if not verify_rapyd_webhook(full_url, salt, timestamp, body_string, signature):
         logger.warning("Firma inválida del webhook")
         return Response({"detail": "Firma inválida"}, status=status.HTTP_401_UNAUTHORIZED)
 
     payload = request.data
-    logger.info(f"Payload validado: {payload}")
-
-    # Procesar el webhook y crear/actualizar el Payment
     result = process_payment_webhook(payload)
-    logger.info(f"Resultado: {result}")
 
     if result["status"] == "error":
-        logger.error(f"Error al procesar webhook: {result['message']}")
+        logger.error("Error al procesar webhook: %s", result["message"])
         return Response(
             {"detail": "Error al procesar pago", "error": result["message"]},
-            status=status.HTTP_400_BAD_REQUEST
+            status=status.HTTP_400_BAD_REQUEST,
         )
-    
-    logger.info(f"Pago procesado correctamente: {result['payment'].rapyd_payment_id}")
+
+    logger.info("Pago procesado correctamente: %s", result["payment"].rapyd_payment_id)
     return Response({"detail": "ok"}, status=status.HTTP_200_OK)
 
 
 def payment_complete(request):
-    logger.info(f"Redirect de éxito recibido: {dict(request.GET)}")
+    logger.info("Redirect de éxito recibido: %s", dict(request.GET))
     return HttpResponse("Pago completado (placeholder). Aquí conectará con `orders`.")
 
+
 def payment_error(request):
-    logger.warning(f"Redirect de error recibido: {dict(request.GET)}")
+    logger.warning("Redirect de error recibido: %s", dict(request.GET))
     return HttpResponse("Pago no completado (placeholder).", status=200)

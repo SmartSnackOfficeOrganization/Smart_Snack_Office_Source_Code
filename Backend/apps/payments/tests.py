@@ -3,17 +3,15 @@ import hashlib
 import hmac
 from unittest.mock import MagicMock, patch
 import json
-
-from django.test import override_settings
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 from .models import Payment
-from .services import process_payment_webhook
 from django.test import TestCase, override_settings
+from .services import build_checkout_page, verify_rapyd_webhook, process_payment_webhook
+from django.utils import timezone
 
-from .services import build_checkout_page, verify_rapyd_webhook
-
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 @override_settings(
     RAPYD_ACCESS_KEY="test_access",
@@ -160,3 +158,85 @@ class PaymentCallbackViewTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(Payment.objects.count(), 0)
+
+@override_settings(RAPYD_ACCESS_KEY="test_access", RAPYD_SECRET_KEY="test_secret", RAPYD_BASE_URL="https://sandboxapi.rapyd.net")
+class InitiateCheckoutViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="buyer@test.com", full_name="Buyer", role="buyer",
+            password="ClaveSegura123", is_active=True,
+        )
+        self.url = "/api/payments/checkout/"
+
+    @patch("apps.payments.views.build_checkout_page")
+    def test_authenticated_user_can_initiate_checkout(self, mock_build):
+        mock_build.return_value = {"data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}}
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(self.url, {"amount": "45000.00"}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("reference", response.data)
+        self.assertEqual(response.data["checkout_url"], "https://sandboxcheckout.rapyd.net/xyz")
+        mock_build.assert_called_once()
+        self.assertEqual(mock_build.call_args.kwargs["user_id"], self.user.id)
+
+    def test_anonymous_cannot_initiate_checkout(self):
+        response = self.client.post(self.url, {"amount": "45000.00"}, format="json")
+        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+
+    def test_rejects_zero_amount(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {"amount": "0"}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class CheckoutStatusViewTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="buyer2@test.com", full_name="Buyer", role="buyer",
+            password="ClaveSegura123", is_active=True,
+        )
+        self.url = "/api/payments/status/ORD-ABC123/"
+
+    def test_returns_pending_when_no_payment_yet(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["status"], "pending")
+
+    def test_returns_real_status_once_webhook_landed(self):
+        Payment.objects.create(
+            user=self.user,
+            rapyd_payment_id="payment_123",
+            merchant_reference_id="ORD-ABC123",
+            customer_token="cus_123",
+            amount=45000,
+            original_amount=45000,
+            status="CLO",
+            paid=True,
+            rapyd_created_at=timezone.now(),
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.data["status"], "CLO")
+        self.assertTrue(response.data["paid"])
+
+    def test_other_user_cannot_see_someone_elses_payment(self):
+        other_user = User.objects.create_user(
+            email="other@test.com", full_name="Other", role="buyer",
+            password="ClaveSegura123", is_active=True,
+        )
+        Payment.objects.create(
+            user=other_user,
+            rapyd_payment_id="payment_456",
+            merchant_reference_id="ORD-ABC123",
+            customer_token="cus_456",
+            amount=45000,
+            original_amount=45000,
+            status="CLO",
+            rapyd_created_at=timezone.now(),
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
