@@ -3,7 +3,7 @@ from django.db import migrations
 
 CATEGORIES = [
     {"name": "Snacks", "description": "Bocadillos y aperitivos saludables"},
-    {"name": "Bebidas", "description": "Jugos, tes y bebidas saludables"},
+    {"name": "Bebidas frías", "description": "Jugos, tes y bebidas saludables"},
     {"name": "Frutas", "description": "Frutas frescas y deshidratadas"},
     {"name": "Barritas", "description": "Barritas energeticas y nutritivas"},
     {"name": "Granolas", "description": "Granolas, cereales y toppings"},
