@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import logging
 import os
 import sys
 from datetime import timedelta
@@ -55,6 +56,7 @@ INSTALLED_APPS = [
     "django_filters",
     "apps.ai_engine",
     "apps.cart",
+    "apps.payments",
 ]
 
 """
@@ -79,6 +81,9 @@ REST_FRAMEWORK = {
 }
 
 TESTING = "test" in sys.argv
+if "test" in sys.argv:
+    LOGGING_CONFIG = None
+    logging.disable(logging.CRITICAL)
 
 AUTH_USER_MODEL = "authentication.User"
 
@@ -221,3 +226,13 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# ==========================================
+# RAPYD (pasarela de pago - sandbox)
+# ==========================================
+RAPYD_ACCESS_KEY = os.environ.get("RAPYD_ACCESS_KEY")
+RAPYD_SECRET_KEY = os.environ.get("RAPYD_SECRET_KEY")
+RAPYD_BASE_URL = os.environ.get("RAPYD_BASE_URL", "https://sandboxapi.rapyd.net")
+
+# Ajuste para que build_absolute_url devuelva https:// en vez de http:// cuando se accede desde el frontend (Next.js)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
