@@ -25,8 +25,8 @@ class Command(BaseCommand):
         # Usuario mock reutilizable — no necesita pasar por el flujo de
         # registro/activación real, solo existir para probar el endpoint.
         user, created = User.objects.get_or_create(
-            email="mock.buyer@smartsnack.test",
-            defaults={"full_name": "Mock Buyer", "role": "buyer", "is_active": True},
+            email="mock.buyer3@smartsnack.test",
+            defaults={"full_name": "Mock Buyer3", "role": "buyer", "is_active": True},
         )
         if created:
             user.set_password("MockPass123")

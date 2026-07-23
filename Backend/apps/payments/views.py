@@ -45,8 +45,8 @@ def initiate_checkout(request):
     error_url = None
     frontend_url = getattr(settings, "FRONTEND_URL", None)
     if frontend_url:
-        complete_url = f"{frontend_url}/checkout/confirmacion?reference={reference}"
-        error_url = f"{frontend_url}/checkout/error?reference={reference}"
+        complete_url = f"{frontend_url}/payments/confirmacion?reference={reference}"
+        error_url = f"{frontend_url}/payments/error?reference={reference}"
 
     try:
         result = build_checkout_page(
@@ -58,10 +58,13 @@ def initiate_checkout(request):
             complete_url=complete_url,
             error_url=error_url,
         )
-    except requests_lib.exceptions.RequestException:
+    except requests_lib.exceptions.RequestException as e:
         logger.exception("Error creando checkout en Rapyd para reference=%s", reference)
+        error_detail = str(e)
+        if hasattr(e, "response") and e.response is not None:
+            error_detail = e.response.text
         return Response(
-            {"detail": "No se pudo iniciar el pago, intenta de nuevo"},
+            {"detail": "No se pudo iniciar el pago", "rapyd_error": error_detail},
             status=status.HTTP_502_BAD_GATEWAY,
         )
 

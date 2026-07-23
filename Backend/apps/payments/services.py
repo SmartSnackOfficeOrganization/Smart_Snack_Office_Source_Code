@@ -55,7 +55,7 @@ def build_checkout_page(
     """
     path = "/v1/checkout"
     body = {
-        "amount": amount,
+        "amount": f"{float(amount):.2f}",
         "country": country,
         "currency": currency,
         "merchant_reference_id": reference,
