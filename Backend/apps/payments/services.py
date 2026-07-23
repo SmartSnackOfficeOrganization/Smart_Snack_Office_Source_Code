@@ -60,7 +60,7 @@ def build_checkout_page(
     Crea una hosted checkout page en el sandbox de Rapyd.
     complete_url/error_url son opcionales: si no se pasan, Rapyd
     redirige de vuelta a su propia página de checkout (sin tocar tu
-    backend/ngrok). Pásalos cuando quieras redirigir al frontend real.
+    backend/ngrok). Si se pasan, Rapyd redirige a esas URLs después de completar o fallar el pago.
     """
     path = "/v1/checkout"
     body = {

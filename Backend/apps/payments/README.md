@@ -6,7 +6,6 @@ ver `technical_decisions.md`.
 
 ## Diagrama de flujo
 
-## Diagrama de flujo
 
 ```mermaid
 sequenceDiagram
