@@ -19,7 +19,11 @@ from .serializers import (
     SellerRegistrationSerializer,
     UserLoginSerializer,
 )
-from .token import AccountActivationTokenGenetator, PasswordResetTokenGenerator, get_tokens_for_user
+from .token import (
+    AccountActivationTokenGenetator,
+    PasswordResetTokenGenerator,
+    get_tokens_for_user,
+)
 
 User = get_user_model()
 

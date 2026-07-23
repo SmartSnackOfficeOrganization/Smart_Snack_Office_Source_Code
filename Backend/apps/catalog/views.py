@@ -8,7 +8,12 @@ from rest_framework.permissions import AllowAny
 
 from .models import Category, Product, ProductImage, Tag
 from .permissions import IsProductOwner, IsSeller
-from .serializers import CategorySerializer, ProductImageSerializer, ProductSerializer, TagSerializer
+from .serializers import (
+    CategorySerializer,
+    ProductImageSerializer,
+    ProductSerializer,
+    TagSerializer,
+)
 
 
 class ProductFilter(django_filters.FilterSet):

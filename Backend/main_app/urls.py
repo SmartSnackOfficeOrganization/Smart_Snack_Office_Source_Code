@@ -31,7 +31,9 @@ class NoThrottleTokenRefreshView(TokenRefreshView):
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/auth/", include("apps.authentication.urls")),
-    path("api/token/refresh/", NoThrottleTokenRefreshView.as_view(), name="token_refresh"),
+    path(
+        "api/token/refresh/", NoThrottleTokenRefreshView.as_view(), name="token_refresh"
+    ),
     path("api/token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     path("api/token/blacklist/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path("api/catalog/", include("apps.catalog.urls")),
