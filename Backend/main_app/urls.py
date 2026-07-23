@@ -38,4 +38,5 @@ urlpatterns = [
     path("api/token/blacklist/", TokenBlacklistView.as_view(), name="token_blacklist"),
     path("api/catalog/", include("apps.catalog.urls")),
     path("api/catalog/", include("apps.ai_engine.urls")),
+    path("api/cart/", include("apps.cart.urls")),
 ]
