@@ -44,6 +44,7 @@ class ProductFilter(django_filters.FilterSet):
 
 class ProductsViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
+    throttle_classes = []
     # Ordering configuration on global config
     filterset_class = ProductFilter
     filter_backends = [OrderingFilter, DjangoFilterBackend]

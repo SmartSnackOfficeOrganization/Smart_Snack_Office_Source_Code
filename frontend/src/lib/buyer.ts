@@ -1,4 +1,16 @@
+import { getAccessToken } from "@/lib/auth/session";
 import { SellerProduct } from "@/lib/seller/catalog.types";
+
+function getBaseUrl(): string {
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+}
+
+async function authHeaders(): Promise<HeadersInit> {
+  const token = getAccessToken();
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  return headers;
+}
 
 export class BuyerProductError extends Error {
   constructor(
@@ -10,14 +22,12 @@ export class BuyerProductError extends Error {
   }
 }
 
-function getBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-}
-
 export async function getProductById(id: string): Promise<SellerProduct> {
   let response: Response;
   try {
-    response = await fetch(`${getBaseUrl()}/api/catalog/products/${id}/`);
+    response = await fetch(`${getBaseUrl()}/api/catalog/products/${id}/`, {
+      headers: await authHeaders(),
+    });
   } catch {
     throw new BuyerProductError("Error de conexión. Intenta de nuevo.", "NETWORK");
   }
