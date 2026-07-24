@@ -60,12 +60,16 @@ class CartItemViewSet(viewsets.ModelViewSet):
         profile = getattr(buyer, "buyer_profile", None)
         if not profile or not profile.delivery_address:
             return Response(
-                {"detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."},
+                {
+                    "detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         cart = self._get_or_create_cart()
-        cart_items = CartItem.objects.filter(cart=cart).select_related("product__seller")
+        cart_items = CartItem.objects.filter(cart=cart).select_related(
+            "product__seller"
+        )
 
         if not cart_items:
             return Response(
