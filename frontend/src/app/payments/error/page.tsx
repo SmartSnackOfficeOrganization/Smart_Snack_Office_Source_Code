@@ -5,16 +5,19 @@ import { useSearchParams } from "next/navigation";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { PaymentStatusIcon } from "@/components/payments/PaymentStatusIcon";
 import { Button } from "@/components/ui/Button";
+import { getAuthSession } from "@/lib/auth/session";
 
 export default function PaymentErrorPage() {
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference");
+  const session = getAuthSession();
+  const dashboardHref = session?.role === "seller" ? "/seller/dashboard" : "/buyer/dashboard";
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-accent-50 px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <SmartSnackLogo />
+          <SmartSnackLogo href={dashboardHref} />
         </div>
 
         <div className="rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/40">
@@ -33,10 +36,10 @@ export default function PaymentErrorPage() {
             </p>
 
             <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
-              <Link href="/buyer/dashboard">
+              <Link href={dashboardHref}>
                 <Button fullWidth>Intentar de nuevo</Button>
               </Link>
-              <Link href="/">
+              <Link href={dashboardHref}>
                 <Button variant="secondary" fullWidth>
                   Volver al inicio
                 </Button>

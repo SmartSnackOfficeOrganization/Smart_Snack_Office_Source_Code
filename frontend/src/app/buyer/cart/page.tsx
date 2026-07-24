@@ -119,7 +119,7 @@ export default function CartPage() {
     <main className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-accent-50">
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <SmartSnackLogo />
+          <SmartSnackLogo href="/buyer/dashboard" />
           <Button
             variant="secondary"
             onClick={() => router.push("/buyer/dashboard")}

@@ -83,7 +83,7 @@ export default function PaymentConfirmationPage() {
     <main className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-50 via-white to-accent-50 px-4 py-10">
       <div className="w-full max-w-md">
         <div className="mb-8 flex justify-center">
-          <SmartSnackLogo />
+          <SmartSnackLogo href={dashboardHref} />
         </div>
 
         <div className="rounded-3xl border border-slate-200/80 bg-white p-8 shadow-xl shadow-slate-200/40">
