@@ -1,8 +1,12 @@
 import Link from "next/link";
 
-export function SmartSnackLogo() {
+interface SmartSnackLogoProps {
+  href?: string;
+}
+
+export function SmartSnackLogo({ href = "/" }: SmartSnackLogoProps) {
   return (
-    <Link href="/" className="group inline-flex items-center gap-2.5">
+    <Link href={href} className="group inline-flex items-center gap-2.5">
       <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-lg shadow-md shadow-brand-600/25 transition group-hover:scale-105">
         🥗
       </span>
