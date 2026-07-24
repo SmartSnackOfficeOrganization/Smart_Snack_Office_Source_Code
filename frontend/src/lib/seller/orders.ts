@@ -11,8 +11,9 @@ async function authHeaders(): Promise<HeadersInit> {
   return headers;
 }
 
-export interface OrderItemData {
+  export interface OrderItemData {
   id: string;
+  product: string;
   product_name: string;
   quantity: number;
   unit_price: string;
@@ -30,6 +31,7 @@ export interface OrderData {
   tax: string;
   total: string;
   items: OrderItemData[];
+  reviewed_product_ids: string[];
   created_at: string;
   updated_at: string;
 }
@@ -67,4 +69,25 @@ export async function downloadShippingLabels(orderIds: string[]): Promise<void> 
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+export async function updateOrderStatus(
+  orderId: string,
+  status: string,
+): Promise<OrderData> {
+  const token = getAccessToken();
+  if (!token) throw new Error("No autenticado.");
+  const response = await fetch(
+    `${getBaseUrl()}/api/orders/${orderId}/change-status/`,
+    {
+      method: "PATCH",
+      headers: await authHeaders(),
+      body: JSON.stringify({ status }),
+    },
+  );
+  if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(data?.detail || "Error al actualizar estado.");
+  }
+  return response.json();
 }

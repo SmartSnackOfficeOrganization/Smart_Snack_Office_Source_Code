@@ -8,7 +8,10 @@ from rest_framework.response import Response
 from apps.authentication.models import Order, OrderItem
 
 from .pdf_utils import generate_receipt_pdf, generate_shipping_labels_pdf
-from .serializers import OrderSerializer
+from .serializers import (
+    OrderSerializer,
+    UpdateStatusSerializer,
+)
 
 
 class IsSeller(IsAuthenticated):
@@ -77,6 +80,18 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
                 "Content-Disposition": "attachment; filename=etiquetas_envio.pdf",
             },
         )
+
+    @action(detail=True, methods=["patch"], url_path="change-status")
+    def change_status(self, request, pk=None):
+        order = self.get_object()
+        serializer = UpdateStatusSerializer(
+            data=request.data,
+            context={"request": request, "order": order},
+        )
+        serializer.is_valid(raise_exception=True)
+        order.status = serializer.validated_data["status"]
+        order.save(update_fields=["status"])
+        return Response(OrderSerializer(order, context={"request": request}).data)
 
 
 class BuyerOrderViewSet(viewsets.ReadOnlyModelViewSet):

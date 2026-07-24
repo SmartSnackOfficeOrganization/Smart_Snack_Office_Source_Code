@@ -1,7 +1,17 @@
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import Category, NutritionFact, Product, ProductImage, ProductTag, Tag
+from apps.authentication.models import Order
+
+from .models import (
+    Category,
+    NutritionFact,
+    Product,
+    ProductImage,
+    ProductTag,
+    Review,
+    Tag,
+)
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -157,3 +167,43 @@ class ProductSerializer(serializers.ModelSerializer):
                     ProductTag.objects.create(product=instance, tag=tag)
 
         return instance
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    buyer_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Review
+        fields = [
+            "id",
+            "buyer",
+            "buyer_name",
+            "product",
+            "order",
+            "rating",
+            "comment",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "buyer",
+            "buyer_name",
+            "product",
+            "order",
+            "created_at",
+        ]
+
+    def get_buyer_name(self, obj):
+        return obj.buyer.full_name
+
+    def validate_rating(self, value):
+        if value < 1 or value > 5:
+            raise serializers.ValidationError("La calificación debe ser entre 1 y 5.")
+        return value
+
+    def validate_comment(self, value):
+        if value and len(value) > 500:
+            raise serializers.ValidationError(
+                "La reseña no puede exceder los 500 caracteres."
+            )
+        return value

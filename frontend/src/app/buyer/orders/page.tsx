@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -143,11 +144,27 @@ export default function BuyerOrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     <div className="flex flex-col gap-0.5">
-                      {order.items.map((item) => (
-                        <span key={item.id} className="text-xs">
-                          {item.quantity}x {item.product_name}
-                        </span>
-                      ))}
+                      {order.items.map((item) => {
+                        const reviewed = (order.reviewed_product_ids ?? []).includes(item.product);
+                        return (
+                          <div key={item.id} className="flex items-center gap-2">
+                            <span className="text-xs">
+                              {item.quantity}x {item.product_name}
+                            </span>
+                            {order.status === "delivered" && !reviewed && (
+                              <Link
+                                href={`/buyer/products/${item.product}`}
+                                className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                              >
+                                Calificar
+                              </Link>
+                            )}
+                            {order.status === "delivered" && reviewed && (
+                              <span className="text-xs text-slate-400">Calificado</span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900">

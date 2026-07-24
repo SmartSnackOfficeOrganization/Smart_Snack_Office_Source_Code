@@ -1,17 +1,23 @@
 import django_filters
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 
-from .models import Category, Product, ProductImage, Tag
+from apps.authentication.models import Order
+
+from .models import Category, Product, ProductImage, Review, Tag
 from .permissions import IsProductOwner, IsSeller
 from .serializers import (
     CategorySerializer,
     ProductImageSerializer,
     ProductSerializer,
+    ReviewSerializer,
     TagSerializer,
 )
 
@@ -122,3 +128,72 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = TagSerializer
     pagination_class = None
     permission_classes = [AllowAny]
+
+
+class IsBuyer(IsAuthenticated):
+    def has_permission(self, request, view):
+        return super().has_permission(request, view) and request.user.role == "buyer"
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    permission_classes = [IsBuyer]
+
+    def get_permissions(self):
+        if self.action in ("list", "retrieve"):
+            return []
+        return [IsBuyer()]
+
+    def get_queryset(self):
+        product_id = self.kwargs.get("product_id")
+        return (
+            Review.objects.filter(product_id=product_id)
+            .select_related("buyer")
+            .order_by("-created_at")
+        )
+
+    def perform_create(self, serializer):
+        product_id = self.kwargs.get("product_id")
+        product = get_object_or_404(Product, id=product_id)
+        buyer = self.request.user
+
+        delivered = (
+            Order.objects.filter(
+                buyer=buyer,
+                status="delivered",
+                items__product=product,
+            )
+            .distinct()
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not delivered:
+            raise ValidationError(
+                "Debes haber recibido este producto (orden entregada) para calificarlo."
+            )
+
+        already_reviewed = Review.objects.filter(
+            buyer=buyer, product=product, order=delivered
+        ).exists()
+        if already_reviewed:
+            raise ValidationError(
+                "Ya has calificado este producto para esta orden de compra."
+            )
+
+        serializer.save(
+            buyer=buyer,
+            product=product,
+            order=delivered,
+        )
+
+    def perform_update(self, serializer):
+        review = self.get_object()
+        if review.buyer != self.request.user:
+            raise PermissionDenied("No puedes editar la reseña de otro usuario.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        if instance.buyer != self.request.user:
+            raise PermissionDenied("No puedes eliminar la reseña de otro usuario.")
+        instance.delete()

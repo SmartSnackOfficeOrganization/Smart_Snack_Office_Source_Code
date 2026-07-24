@@ -4,7 +4,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { getSellerOrders, downloadShippingLabels, OrderData } from "@/lib/seller/orders";
+import {
+  getSellerOrders,
+  downloadShippingLabels,
+  updateOrderStatus,
+  OrderData,
+} from "@/lib/seller/orders";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
@@ -22,6 +27,7 @@ export default function SellerOrdersPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -67,6 +73,20 @@ export default function SellerOrdersPage() {
       setError(err instanceof Error ? err.message : "Error al generar etiquetas.");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function handleStatusChange(orderId: string, newStatus: string) {
+    setUpdatingId(orderId);
+    setError(null);
+    try {
+      await updateOrderStatus(orderId, newStatus);
+      await fetchOrders();
+      setSelected(new Set());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al actualizar estado.");
+    } finally {
+      setUpdatingId(null);
     }
   }
 
@@ -143,6 +163,7 @@ export default function SellerOrdersPage() {
                 <th className="px-4 py-3">Total</th>
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Fecha</th>
+                <th className="px-4 py-3">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -203,6 +224,28 @@ export default function SellerOrdersPage() {
                       month: "2-digit",
                       year: "numeric",
                     })}
+                  </td>
+                  <td className="px-4 py-3">
+                    {order.status === "paid" && (
+                      <button
+                        type="button"
+                        disabled={updatingId === order.id}
+                        onClick={() => handleStatusChange(order.id, "shipped")}
+                        className="rounded-lg bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 transition hover:bg-blue-200 disabled:opacity-50"
+                      >
+                        {updatingId === order.id ? "…" : "Marcar como enviado"}
+                      </button>
+                    )}
+                    {order.status === "shipped" && (
+                      <button
+                        type="button"
+                        disabled={updatingId === order.id}
+                        onClick={() => handleStatusChange(order.id, "delivered")}
+                        className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                      >
+                        {updatingId === order.id ? "…" : "Marcar como entregado"}
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}

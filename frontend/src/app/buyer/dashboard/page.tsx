@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { ReviewPrompt } from "@/components/buyer/ReviewPrompt";
 
 function DashboardCard({
   href,
@@ -35,7 +36,8 @@ export default function BuyerDashboardPage() {
       title="Bienvenido a tu panel de comprador"
       description="Aquí podrás explorar el catálogo, gestionar pedidos corporativos y configurar entregas a tu oficina."
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <ReviewPrompt />
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardCard
           href="/buyer/catalog"
           icon="🔍"

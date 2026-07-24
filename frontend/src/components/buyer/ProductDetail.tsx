@@ -3,26 +3,13 @@
 import { useState } from "react";
 import { SellerProduct } from "@/lib/seller/catalog.types";
 import { Button } from "@/components/ui/Button";
+import { StarRating } from "@/components/ui/StarRating";
 import { addToCart, CartError } from "@/lib/cart";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
+import { ReviewList } from "@/components/reviews/ReviewList";
 
 interface ProductDetailProps {
   product: SellerProduct;
-}
-
-function StarRating({ avgRating }: { avgRating: string }) {
-  const rating = parseFloat(avgRating);
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.5;
-
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrellas`}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className="text-lg">
-          {i < fullStars ? "★" : i === fullStars && hasHalf ? "½" : "☆"}
-        </span>
-      ))}
-    </div>
-  );
 }
 
 function NutritionTable({
@@ -70,6 +57,7 @@ export function ProductDetail({ product }: ProductDetailProps) {
   const [addingToCart, setAddingToCart] = useState(false);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [allergyError, setAllergyError] = useState<string | null>(null);
+  const [reviewRefreshKey, setReviewRefreshKey] = useState(0);
   const isOutOfStock = product.stock <= 0;
 
   async function handleAddToCart() {
@@ -194,11 +182,16 @@ export function ProductDetail({ product }: ProductDetailProps) {
 
       <hr className="my-5 border-slate-100" />
 
-      <div>
+      <div className="space-y-4">
         <h2 className="text-sm font-semibold text-slate-700">Reseñas</h2>
-        <p className="mt-2 text-sm text-slate-400">
-          Las reseñas estarán disponibles próximamente.
-        </p>
+        <ReviewList productId={product.id} refreshKey={reviewRefreshKey} />
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <p className="mb-2 text-sm font-medium text-slate-700">Deja tu reseña</p>
+          <ReviewForm
+            productId={product.id}
+            onSuccess={() => setReviewRefreshKey((k) => k + 1)}
+          />
+        </div>
       </div>
 
       <div className="mt-8 flex flex-col gap-3 sm:flex-row">

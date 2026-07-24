@@ -13,6 +13,7 @@ async function authHeaders(): Promise<HeadersInit> {
 
 export interface BuyerOrderItem {
   id: string;
+  product: string;
   product_name: string;
   quantity: number;
   unit_price: string;
@@ -30,6 +31,7 @@ export interface BuyerOrder {
   total: string;
   transaction_id: string | null;
   items: BuyerOrderItem[];
+  reviewed_product_ids: string[];
   created_at: string;
 }
 

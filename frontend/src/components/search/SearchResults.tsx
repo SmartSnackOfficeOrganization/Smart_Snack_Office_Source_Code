@@ -1,25 +1,10 @@
 import Link from "next/link";
 import { Product } from "@/lib/catalog.types";
+import { StarRating } from "@/components/ui/StarRating";
 
 interface SearchResultsProps {
   products: Product[];
   query: string;
-}
-
-function StarRating({ avgRating }: { avgRating: string }) {
-  const rating = parseFloat(avgRating);
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.5;
-
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`${rating} de 5 estrellas`}>
-      {Array.from({ length: 5 }, (_, i) => (
-        <span key={i} className="text-sm">
-          {i < fullStars ? "★" : i === fullStars && hasHalf ? "½" : "☆"}
-        </span>
-      ))}
-    </div>
-  );
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -49,7 +34,7 @@ function ProductCard({ product }: { product: Product }) {
           )}
         </div>
         <div className="text-right">
-          <StarRating avgRating={product.avg_rating} />
+          <StarRating avgRating={product.avg_rating} size="sm" />
           <p className="mt-0.5 text-xs text-slate-400">
             {product.review_count} reseña{product.review_count !== 1 ? "s" : ""}
           </p>

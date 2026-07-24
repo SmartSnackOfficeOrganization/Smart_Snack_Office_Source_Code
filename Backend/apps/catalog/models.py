@@ -70,6 +70,29 @@ class Product(models.Model):
         return self.name
 
 
+class Review(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reviews"
+    )
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="reviews"
+    )
+    order = models.ForeignKey(
+        "authentication.Order", on_delete=models.CASCADE, related_name="reviews"
+    )
+    rating = models.SmallIntegerField(help_text="1-5")
+    comment = models.CharField(max_length=500, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "reviews"
+        unique_together = (("buyer", "product", "order"),)
+
+    def __str__(self):
+        return f"Review {self.rating}/5 by {self.buyer} on {self.product}"
+
+
 class NutritionFact(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     product = models.OneToOneField(

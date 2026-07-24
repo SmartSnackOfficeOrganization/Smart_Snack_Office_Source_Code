@@ -34,7 +34,9 @@ def generate_shipping_labels_pdf(orders) -> io.BytesIO:
         can.drawString(0.5 * inch, y, f"Orden #{order.id}")
         y -= 0.15 * inch
 
-        can.drawString(0.5 * inch, y, f"Fecha: {order.created_at.strftime('%d/%m/%Y %H:%M')}")
+        can.drawString(
+            0.5 * inch, y, f"Fecha: {order.created_at.strftime('%d/%m/%Y %H:%M')}"
+        )
         y -= 0.3 * inch
 
         can.setFont("Helvetica-Bold", 11)
@@ -92,7 +94,9 @@ def generate_receipt_pdf(order) -> io.BytesIO:
     y -= 0.15 * inch
     can.drawString(margin, y, f"Fecha: {order.created_at.strftime('%d/%m/%Y %H:%M')}")
     if order.transaction_id:
-        can.drawString(3.5 * inch, y + 0.15 * inch, f"Transacción: {order.transaction_id}")
+        can.drawString(
+            3.5 * inch, y + 0.15 * inch, f"Transacción: {order.transaction_id}"
+        )
     y -= 0.15 * inch
     can.drawString(margin, y, f"Cliente: {order.buyer.full_name}")
     profile = getattr(order.buyer, "buyer_profile", None)
