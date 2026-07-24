@@ -8,10 +8,7 @@ from rest_framework.response import Response
 from apps.authentication.models import Order, OrderItem
 
 from .pdf_utils import generate_receipt_pdf, generate_shipping_labels_pdf
-from .serializers import (
-    OrderSerializer,
-    UpdateStatusSerializer,
-)
+from .serializers import OrderSerializer, UpdateStatusSerializer
 
 
 class IsSeller(IsAuthenticated):
