@@ -54,10 +54,10 @@ export default function ProductDetailPage() {
 
       <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
         <Link
-          href="/buyer/catalog"
+          href="/buyer/dashboard"
           className="mb-6 inline-flex items-center gap-1 text-sm font-medium text-brand-700 hover:underline"
         >
-          ← Volver al catálogo
+          ← Volver al panel
         </Link>
 
         {loading && (

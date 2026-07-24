@@ -138,6 +138,7 @@ class IsBuyer(IsAuthenticated):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    throttle_classes = []
     permission_classes = [IsBuyer]
 
     def get_permissions(self):
