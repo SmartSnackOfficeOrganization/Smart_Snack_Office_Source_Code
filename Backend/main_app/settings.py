@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     "apps.ai_engine",
     "apps.cart",
     "apps.payments",
+    "apps.orders",
 ]
 
 """

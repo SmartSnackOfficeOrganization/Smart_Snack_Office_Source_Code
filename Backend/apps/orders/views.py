@@ -1,5 +1,3 @@
-import io
-
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from rest_framework import status, viewsets
@@ -7,7 +5,8 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Order, OrderItem
+from apps.authentication.models import Order, OrderItem
+
 from .pdf_utils import generate_receipt_pdf, generate_shipping_labels_pdf
 from .serializers import OrderSerializer
 

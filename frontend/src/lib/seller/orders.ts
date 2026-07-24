@@ -39,7 +39,7 @@ export async function getSellerOrders(status?: string): Promise<OrderData[]> {
   if (!token) return [];
   const params = status ? `?status=${encodeURIComponent(status)}` : "";
   const response = await fetch(
-    `${getBaseUrl()}/api/auth/orders/${params}`,
+    `${getBaseUrl()}/api/orders/${params}`,
     { headers: await authHeaders() },
   );
   if (!response.ok) throw new Error("Error al cargar pedidos.");
@@ -51,7 +51,7 @@ export async function downloadShippingLabels(orderIds: string[]): Promise<void> 
   if (!token) throw new Error("No autenticado.");
   const params = orderIds.map((id) => `order_ids=${encodeURIComponent(id)}`).join("&");
   const response = await fetch(
-    `${getBaseUrl()}/api/auth/orders/shipping-labels/?${params}`,
+    `${getBaseUrl()}/api/orders/shipping-labels/?${params}`,
     { headers: await authHeaders() },
   );
   if (!response.ok) {

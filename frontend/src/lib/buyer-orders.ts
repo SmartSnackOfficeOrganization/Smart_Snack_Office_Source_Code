@@ -38,7 +38,7 @@ export async function getMyOrders(status?: string): Promise<BuyerOrder[]> {
   if (!token) return [];
   const params = status ? `?status=${encodeURIComponent(status)}` : "";
   const response = await fetch(
-    `${getBaseUrl()}/api/auth/my-orders/${params}`,
+    `${getBaseUrl()}/api/my-orders/${params}`,
     { headers: await authHeaders() },
   );
   if (!response.ok) throw new Error("Error al cargar pedidos.");
@@ -49,7 +49,7 @@ export async function downloadReceipt(orderId: string): Promise<void> {
   const token = getAccessToken();
   if (!token) throw new Error("No autenticado.");
   const response = await fetch(
-    `${getBaseUrl()}/api/auth/my-orders/${orderId}/receipt/`,
+    `${getBaseUrl()}/api/my-orders/${orderId}/receipt/`,
     { headers: await authHeaders() },
   );
   if (!response.ok) throw new Error("Error al descargar comprobante.");

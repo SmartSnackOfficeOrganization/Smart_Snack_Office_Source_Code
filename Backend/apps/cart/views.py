@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.authentication.models import Order, OrderItem
-from apps.authentication.serializers import OrderSerializer
+from apps.orders.serializers import OrderSerializer
 
 from .models import Cart, CartItem
 from .permissions import isBuyer
