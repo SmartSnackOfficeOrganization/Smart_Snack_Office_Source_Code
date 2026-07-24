@@ -83,6 +83,7 @@ class ProductImageViewSet(viewsets.ModelViewSet):
     """ViewSet for managing product images. Only the owner of the product can add, update, or delete images."""
 
     serializer_class = ProductImageSerializer
+    throttle_classes = []
 
     def get_permissions(self):
         if self.action in ["create", "update", "partial_update", "destroy"]:
@@ -121,6 +122,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = None
+    throttle_classes = []
     permission_classes = [AllowAny]
 
 
@@ -128,6 +130,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
+    throttle_classes = []
     permission_classes = [AllowAny]
 
 

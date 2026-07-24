@@ -137,6 +137,7 @@ def logout(request):
 
 
 @api_view(["GET"])
+@throttle_classes([])
 @permission_classes([AllowAny])
 def activate_account(request, uidb64, token):
     try:
