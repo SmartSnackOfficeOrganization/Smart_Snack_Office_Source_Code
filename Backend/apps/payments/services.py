@@ -3,10 +3,10 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import random
 import string
 import time
-import logging
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
@@ -16,6 +16,7 @@ from django.conf import settings
 from .models import Payment
 
 logger = logging.getLogger(__name__)
+
 
 def _generate_salt(length: int = 12) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -165,6 +166,7 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
         merchant_reference_id = payment_data.get("merchant_reference_id", "")
 
         from apps.orders.models import Order
+
         order = Order.objects.filter(id=merchant_reference_id).first()
         if not order:
             logger.warning(

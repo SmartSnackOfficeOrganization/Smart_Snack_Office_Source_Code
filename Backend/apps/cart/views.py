@@ -60,24 +60,32 @@ class CartItemViewSet(viewsets.ModelViewSet):
         profile = getattr(buyer, "buyer_profile", None)
         if not profile or not profile.delivery_address:
             return Response(
-                {"detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."},
+                {
+                    "detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         cart = self._get_or_create_cart()
-        cart_items = CartItem.objects.filter(cart=cart).select_related("product__seller")
+        cart_items = CartItem.objects.filter(cart=cart).select_related(
+            "product__seller"
+        )
 
         if not cart_items:
-            return Response({"detail": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         with transaction.atomic():
-            subtotal = sum(Decimal(str(item.unit_price)) * item.quantity for item in cart_items)
+            subtotal = sum(
+                Decimal(str(item.unit_price)) * item.quantity for item in cart_items
+            )
             tax = (subtotal * Decimal("0.19")).quantize(Decimal("0.01"))
             total = subtotal + tax
 
             order = Order.objects.create(
                 buyer=buyer,
-                status="pending_payment",   # <- el único cambio real
+                status="pending_payment",  # <- el único cambio real
                 delivery_address=profile.delivery_address,
                 subtotal=subtotal,
                 tax=tax,

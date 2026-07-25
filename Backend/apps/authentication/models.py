@@ -149,6 +149,7 @@ class Order(models.Model):
         del webhook de pago.
         """
         from django.db import transaction
+
         from apps.catalog.models import Product
 
         final_states = ("paid", "payment_failed", "cancelled", "refunded")
@@ -168,7 +169,9 @@ class Order(models.Model):
             order.status = "paid"
             order.transaction_id = transaction_id
             order.stock_reserved_until = None
-            order.save(update_fields=["status", "transaction_id", "stock_reserved_until"])
+            order.save(
+                update_fields=["status", "transaction_id", "stock_reserved_until"]
+            )
 
             self.status = order.status
             self.transaction_id = order.transaction_id

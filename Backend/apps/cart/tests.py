@@ -10,7 +10,6 @@ from apps.orders.models import Order
 
 from .models import Cart, CartItem
 
-
 User = get_user_model()
 
 
@@ -181,7 +180,7 @@ class CartItemAPITests(APITestCase):
         self.assertEqual(CartItem.objects.filter(cart__buyer=self.buyer).count(), 0)
 
     def test_checkout_creates_order_as_pending_payment_not_paid(self):
-    # ... setUp con cart_items ...
+        # ... setUp con cart_items ...
         response = self.client.post("/api/cart/items/checkout/")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         order = Order.objects.get(id=response.data["id"])
@@ -193,4 +192,4 @@ class CartItemAPITests(APITestCase):
         initial_stock = self.product.stock
         self.client.post("/api/cart/items/checkout/")
         self.product.refresh_from_db()
-        self.assertEqual(self.product.stock, initial_stock) 
+        self.assertEqual(self.product.stock, initial_stock)

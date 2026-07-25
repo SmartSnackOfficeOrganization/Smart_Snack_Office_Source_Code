@@ -33,18 +33,26 @@ def initiate_checkout(request):
 
     if order.status != "pending_payment":
         return Response(
-            {"detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"},
+            {
+                "detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     frontend_url = getattr(settings, "FRONTEND_URL", None)
-    complete_url = f"{frontend_url}/payments/confirmacion?reference={order.id}" if frontend_url else None
-    error_url = f"{frontend_url}/payments/error?reference={order.id}" if frontend_url else None
+    complete_url = (
+        f"{frontend_url}/payments/confirmacion?reference={order.id}"
+        if frontend_url
+        else None
+    )
+    error_url = (
+        f"{frontend_url}/payments/error?reference={order.id}" if frontend_url else None
+    )
 
     try:
         result = build_checkout_page(
             reference=str(order.id),
-            amount=float(order.total),      # <- viene del servidor, no del request
+            amount=float(order.total),  # <- viene del servidor, no del request
             currency="COP",
             country="CO",
             user_id=request.user.id,
@@ -53,7 +61,9 @@ def initiate_checkout(request):
         )
     except requests_lib.exceptions.RequestException as e:
         logger.exception("Error creando checkout en Rapyd para order_id=%s", order.id)
-        error_detail = e.response.text if getattr(e, "response", None) is not None else str(e)
+        error_detail = (
+            e.response.text if getattr(e, "response", None) is not None else str(e)
+        )
         return Response(
             {"detail": "No se pudo iniciar el pago", "rapyd_error": error_detail},
             status=status.HTTP_502_BAD_GATEWAY,
