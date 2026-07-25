@@ -1,15 +1,13 @@
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import F, Sum
+from django.db.models import Sum
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from apps.authentication.models import Order, OrderItem
-from apps.catalog.models import Product
+from apps.orders.models import Order, OrderItem
 from apps.orders.serializers import OrderSerializer
 
 from .models import Cart, CartItem
@@ -62,54 +60,24 @@ class CartItemViewSet(viewsets.ModelViewSet):
         profile = getattr(buyer, "buyer_profile", None)
         if not profile or not profile.delivery_address:
             return Response(
-                {
-                    "detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."
-                },
+                {"detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         cart = self._get_or_create_cart()
-        cart_qs = CartItem.objects.filter(cart=cart).select_related("product__seller")
-        cart_items = list(cart_qs)
+        cart_items = CartItem.objects.filter(cart=cart).select_related("product__seller")
 
         if not cart_items:
-            return Response(
-                {"detail": "El carrito está vacío."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"detail": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            product_ids = [item.product_id for item in cart_items]
-            locked_products = {
-                p.id: p
-                for p in Product.objects.select_for_update()
-                .filter(id__in=product_ids)
-                .order_by("id")
-            }
-
-            insufficient = []
-            for item in cart_items:
-                product = locked_products.get(item.product_id)
-                if not product or product.stock < item.quantity:
-                    name = product.name if product else "Producto desconocido"
-                    insufficient.append(
-                        f"{name} (disponible: {product.stock if product else 0}, solicitado: {item.quantity})"
-                    )
-
-            if insufficient:
-                raise ValidationError(
-                    f"Stock insuficiente para los siguientes productos: {'; '.join(insufficient)}"
-                )
-
-            subtotal = sum(
-                Decimal(str(item.unit_price)) * item.quantity for item in cart_items
-            )
+            subtotal = sum(Decimal(str(item.unit_price)) * item.quantity for item in cart_items)
             tax = (subtotal * Decimal("0.19")).quantize(Decimal("0.01"))
             total = subtotal + tax
 
             order = Order.objects.create(
                 buyer=buyer,
-                status="paid",
+                status="pending_payment",   # <- el único cambio real
                 delivery_address=profile.delivery_address,
                 subtotal=subtotal,
                 tax=tax,
@@ -126,14 +94,6 @@ class CartItemViewSet(viewsets.ModelViewSet):
                     subtotal=Decimal(str(item.unit_price)) * item.quantity,
                 )
 
-                product = locked_products[item.product_id]
-                Product.objects.filter(id=product.id).update(
-                    stock=F("stock") - item.quantity
-                )
+            cart_items.delete()
 
-            cart_qs.delete()
-
-        return Response(
-            OrderSerializer(order).data,
-            status=status.HTTP_201_CREATED,
-        )
+        return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)

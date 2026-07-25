@@ -1,5 +1,5 @@
 "use client";
-
+import { initiateCheckout } from "@/lib/payments/checkout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -49,6 +49,8 @@ export default function CartPage() {
     fetchCart();
   }, [fetchCart]);
 
+
+
   async function handleQuantityChange(id: string, quantity: number) {
     if (quantity < 1) return;
     const prev = items.find((i) => i.id === id);
@@ -89,19 +91,22 @@ export default function CartPage() {
     setCheckoutError(null);
     setCheckoutLoading(true);
     try {
-      await checkout();
-      router.push("/buyer/dashboard");
+      const order = await checkout(); // crea la orden en pending_payment
+      const { checkout_url } = await initiateCheckout(order.id);
+      window.location.href = checkout_url; // navegación real, no router.push
     } catch (err) {
       const msg =
         err instanceof CartError
           ? err.message
-          : "Error al procesar el pago. Intenta de nuevo.";
+          : err instanceof Error
+            ? err.message
+            : "Error al procesar el pago. Intenta de nuevo.";
       setCheckoutError(msg);
     } finally {
       setCheckoutLoading(false);
     }
   }
-
+  
   const subtotal = items.reduce(
     (sum, item) => sum + parseFloat(item.product.price) * item.quantity,
     0,
@@ -119,7 +124,7 @@ export default function CartPage() {
     <main className="min-h-screen bg-gradient-to-br from-brand-50 via-white to-accent-50">
       <header className="border-b border-slate-200/80 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6">
-          <SmartSnackLogo href="/buyer/dashboard" />
+          <SmartSnackLogo />
           <Button
             variant="secondary"
             onClick={() => router.push("/buyer/dashboard")}

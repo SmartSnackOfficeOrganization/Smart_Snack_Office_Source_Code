@@ -5,18 +5,16 @@ from rest_framework import serializers
 from .models import Payment
 
 
+from rest_framework import serializers
+from .models import Payment
+
+
 class InitiateCheckoutSerializer(serializers.Serializer):
     """
-    Valida los datos de entrada para iniciar un checkout.
-    recibe el monto directamente; cuando exista `orders` modificar`.
+    Ya no recibe amount/currency/country del cliente — solo el pedido
+    a pagar. El monto y la moneda salen del Order en el servidor.
     """
-
-    amount = serializers.DecimalField(
-        max_digits=15, decimal_places=2, min_value=Decimal("0.01")
-    )
-    currency = serializers.CharField(max_length=3, default="COP")
-    country = serializers.CharField(max_length=2, default="CO")
-    reference = serializers.CharField(max_length=255, required=False, allow_blank=False)
+    order_id = serializers.UUIDField()
 
 
 class PaymentStatusSerializer(serializers.ModelSerializer):

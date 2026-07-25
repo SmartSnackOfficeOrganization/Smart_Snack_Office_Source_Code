@@ -6,6 +6,7 @@ import json
 import random
 import string
 import time
+import logging
 from datetime import datetime
 from datetime import timezone as dt_timezone
 
@@ -14,6 +15,7 @@ from django.conf import settings
 
 from .models import Payment
 
+logger = logging.getLogger(__name__)
 
 def _generate_salt(length: int = 12) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -160,11 +162,21 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
             except User.DoesNotExist:
                 pass
 
+        merchant_reference_id = payment_data.get("merchant_reference_id", "")
+
+        from apps.orders.models import Order
+        order = Order.objects.filter(id=merchant_reference_id).first()
+        if not order:
+            logger.warning(
+                "Webhook recibido sin Order asociado: %s", merchant_reference_id
+            )
+
         payment, created = Payment.objects.update_or_create(
             rapyd_payment_id=payment_id,
             defaults={
                 "user": user,
-                "merchant_reference_id": payment_data.get("merchant_reference_id", ""),
+                "order": order,
+                "merchant_reference_id": merchant_reference_id,
                 "customer_token": payment_data.get("customer_token", ""),
                 "amount": payment_data.get("amount", 0),
                 "original_amount": payment_data.get("original_amount", 0),
@@ -193,6 +205,9 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
             },
         )
 
+        if order:
+            _sync_order_status(order, payment)
+
         return {
             "status": "success",
             "created": created,
@@ -202,3 +217,15 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
 
     except Exception as e:
         return {"status": "error", "message": f"Error processing payment: {str(e)}"}
+
+
+def _sync_order_status(order, payment: "Payment") -> None:
+    """
+    Traduce el resultado del pago a una transición de estado del
+    Order, delegando toda la lógica de negocio (stock, idempotencia)
+    al propio modelo Order.
+    """
+    if payment.status == "CLO" and payment.paid:
+        order.mark_as_paid(transaction_id=payment.rapyd_payment_id)
+    elif payment.status in ("ERR", "CAN", "EXP"):
+        order.mark_as_payment_failed()

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -9,10 +8,12 @@ import { getMyOrders, downloadReceipt, BuyerOrder } from "@/lib/buyer-orders";
 
 const STATUS_OPTIONS = [
   { value: "", label: "Todos" },
+  { value: "pending_payment", label: "Pendiente de pago" },  
   { value: "paid", label: "Confirmado" },
   { value: "shipped", label: "Enviado" },
   { value: "delivered", label: "Entregado" },
   { value: "cancelled", label: "Cancelado" },
+  { value: "payment_failed", label: "Pago fallido" },        
 ];
 
 export default function BuyerOrdersPage() {
@@ -54,16 +55,20 @@ export default function BuyerOrdersPage() {
 
   function statusBadge(status: string) {
     const styles: Record<string, string> = {
+      pending_payment: "bg-amber-100 text-amber-700",
       paid: "bg-green-100 text-green-700",
       shipped: "bg-blue-100 text-blue-700",
       delivered: "bg-slate-100 text-slate-600",
       cancelled: "bg-red-100 text-red-700",
+      payment_failed: "bg-red-100 text-red-700",
     };
     const labels: Record<string, string> = {
+      pending_payment: "Pendiente de pago",
       paid: "Confirmado",
       shipped: "Enviado",
       delivered: "Entregado",
       cancelled: "Cancelado",
+      payment_failed: "Pago fallido",
     };
     return (
       <span
@@ -144,27 +149,11 @@ export default function BuyerOrdersPage() {
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     <div className="flex flex-col gap-0.5">
-                      {order.items.map((item) => {
-                        const reviewed = (order.reviewed_product_ids ?? []).includes(item.product);
-                        return (
-                          <div key={item.id} className="flex items-center gap-2">
-                            <span className="text-xs">
-                              {item.quantity}x {item.product_name}
-                            </span>
-                            {order.status === "delivered" && !reviewed && (
-                              <Link
-                                href={`/buyer/products/${item.product}`}
-                                className="text-xs font-medium text-brand-600 hover:text-brand-700 hover:underline"
-                              >
-                                Calificar
-                              </Link>
-                            )}
-                            {order.status === "delivered" && reviewed && (
-                              <span className="text-xs text-slate-400">Calificado</span>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {order.items.map((item) => (
+                        <span key={item.id} className="text-xs">
+                          {item.quantity}x {item.product_name}
+                        </span>
+                      ))}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-medium text-slate-900">

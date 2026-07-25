@@ -6,8 +6,10 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from apps.catalog.models import Product
+from apps.orders.models import Order
 
 from .models import Cart, CartItem
+
 
 User = get_user_model()
 
@@ -177,3 +179,18 @@ class CartItemAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertEqual(CartItem.objects.filter(cart__buyer=self.buyer).count(), 0)
+
+    def test_checkout_creates_order_as_pending_payment_not_paid(self):
+    # ... setUp con cart_items ...
+        response = self.client.post("/api/cart/items/checkout/")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        order = Order.objects.get(id=response.data["id"])
+        self.assertEqual(order.status, "pending_payment")  # NO "paid"
+
+    def test_checkout_does_not_decrement_stock_directly(self):
+        """El stock solo se descuenta vía Order.mark_as_paid(), nunca
+        directamente en el checkout del carrito."""
+        initial_stock = self.product.stock
+        self.client.post("/api/cart/items/checkout/")
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, initial_stock) 

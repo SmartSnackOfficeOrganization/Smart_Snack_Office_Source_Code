@@ -36,29 +36,20 @@ export interface CheckoutStatus {
   created_at: string | null;
 }
 
-export async function initiateCheckout(
-  amount: number,
-  currency = "COP",
-  country = "CO",
-  reference?: string,
-): Promise<CheckoutResponse> {
+export async function initiateCheckout(orderId: string): Promise<CheckoutResponse> {
   try {
     const response = await fetch(`${getBaseUrl()}/api/payments/checkout/`, {
       method: "POST",
       headers: await authHeaders(),
-      body: JSON.stringify({
-        amount: amount.toFixed(2),
-        currency,
-        country,
-        ...(reference ? { reference } : {}),
-      }),
+      body: JSON.stringify({ order_id: orderId }),
     });
 
     if (response.status === 401 || response.status === 403) {
-      throw new CheckoutError(
-        "Debes iniciar sesión como comprador.",
-        "AUTH",
-      );
+      throw new CheckoutError("Debes iniciar sesión como comprador.", "AUTH");
+    }
+
+    if (response.status === 404) {
+      throw new CheckoutError("El pedido no existe o no te pertenece.", "UNKNOWN");
     }
 
     if (response.status === 502) {
@@ -71,10 +62,7 @@ export async function initiateCheckout(
 
     if (!response.ok) {
       const data = await response.json();
-      const msg =
-        typeof data === "string"
-          ? data
-          : data.detail || "Error al iniciar el pago.";
+      const msg = typeof data === "string" ? data : data.detail || "Error al iniciar el pago.";
       throw new CheckoutError(msg, "UNKNOWN");
     }
 

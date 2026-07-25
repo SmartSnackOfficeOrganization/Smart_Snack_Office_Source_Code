@@ -1,15 +1,16 @@
-# apps/payments/views.py
 import logging
-import uuid
 
 import requests as requests_lib
 from django.conf import settings
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
+
+from apps.orders.models import Order
 
 from .models import Payment
 from .serializers import InitiateCheckoutSerializer, PaymentStatusSerializer
@@ -22,53 +23,44 @@ logger = logging.getLogger(__name__)
 @permission_classes([IsAuthenticated])
 @throttle_classes([UserRateThrottle])
 def initiate_checkout(request):
-    """
-    Crea una hosted checkout page en Rapyd para el usuario autenticado.
-
-    Hoy recibe el monto directamente en el body (mientras `orders` no
-    existe). Cuando esa app exista, este endpoint puede evolucionar a
-    recibir un `order_id`, validar que le pertenece a request.user,
-    tomar el total de ahí, y crear el `Order` en estado pending_payment
-    antes de llamar a Rapyd — sin cambiar la forma de `build_checkout_page`.
-    """
     serializer = InitiateCheckoutSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
-    data = serializer.validated_data
+    order_id = serializer.validated_data["order_id"]
 
-    reference = data.get("reference") or f"ORD-{uuid.uuid4().hex[:12].upper()}"
+    # El filtro por buyer=request.user es la pieza de seguridad clave:
+    # nadie puede iniciar un checkout de un pedido que no es suyo.
+    order = get_object_or_404(Order, id=order_id, buyer=request.user)
 
-    complete_url = None
-    error_url = None
+    if order.status != "pending_payment":
+        return Response(
+            {"detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     frontend_url = getattr(settings, "FRONTEND_URL", None)
-    if frontend_url:
-        complete_url = f"{frontend_url}/payments/confirmacion?reference={reference}"
-        error_url = f"{frontend_url}/payments/error?reference={reference}"
+    complete_url = f"{frontend_url}/payments/confirmacion?reference={order.id}" if frontend_url else None
+    error_url = f"{frontend_url}/payments/error?reference={order.id}" if frontend_url else None
 
     try:
         result = build_checkout_page(
-            reference=reference,
-            amount=float(data["amount"]),
-            currency=data["currency"],
-            country=data["country"],
+            reference=str(order.id),
+            amount=float(order.total),      # <- viene del servidor, no del request
+            currency="COP",
+            country="CO",
             user_id=request.user.id,
             complete_url=complete_url,
             error_url=error_url,
         )
     except requests_lib.exceptions.RequestException as e:
-        logger.exception("Error creando checkout en Rapyd para reference=%s", reference)
-        error_detail = str(e)
-        if hasattr(e, "response") and e.response is not None:
-            error_detail = e.response.text
+        logger.exception("Error creando checkout en Rapyd para order_id=%s", order.id)
+        error_detail = e.response.text if getattr(e, "response", None) is not None else str(e)
         return Response(
             {"detail": "No se pudo iniciar el pago", "rapyd_error": error_detail},
             status=status.HTTP_502_BAD_GATEWAY,
         )
 
     return Response(
-        {
-            "reference": reference,
-            "checkout_url": result["data"]["redirect_url"],
-        },
+        {"reference": str(order.id), "checkout_url": result["data"]["redirect_url"]},
         status=status.HTTP_201_CREATED,
     )
 
