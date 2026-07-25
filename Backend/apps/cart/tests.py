@@ -179,17 +179,45 @@ class CartItemAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
         self.assertEqual(CartItem.objects.filter(cart__buyer=self.buyer).count(), 0)
 
-    def test_checkout_creates_order_as_pending_payment_not_paid(self):
-        # ... setUp con cart_items ...
-        response = self.client.post("/api/cart/items/checkout/")
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        order = Order.objects.get(id=response.data["id"])
-        self.assertEqual(order.status, "pending_payment")  # NO "paid"
 
-    def test_checkout_does_not_decrement_stock_directly(self):
-        """El stock solo se descuenta vía Order.mark_as_paid(), nunca
-        directamente en el checkout del carrito."""
-        initial_stock = self.product.stock
-        self.client.post("/api/cart/items/checkout/")
-        self.product.refresh_from_db()
-        self.assertEqual(self.product.stock, initial_stock)
+def test_checkout_creates_order_as_pending_payment_not_paid(self):
+    from apps.authentication.models import (  # ajusta el import si vive en otro módulo
+        BuyerProfile,
+    )
+
+    BuyerProfile.objects.get_or_create(
+        user=self.buyer, defaults={"delivery_address": "Calle 123 #45-67"}
+    )
+    self.client.force_authenticate(user=self.buyer)
+    self.client.post(
+        self.items_url,
+        {"product_id": str(self.product.id), "quantity": 2},
+        format="json",
+    )
+
+    response = self.client.post("/api/cart/items/checkout/")
+
+    self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+    order = Order.objects.get(id=response.data["id"])
+    self.assertEqual(order.status, "pending_payment")
+
+
+def test_checkout_does_not_decrement_stock_directly(self):
+
+    from apps.authentication.models import BuyerProfile
+
+    BuyerProfile.objects.get_or_create(
+        user=self.buyer, defaults={"delivery_address": "Calle 123 #45-67"}
+    )
+    self.client.force_authenticate(user=self.buyer)
+    self.client.post(
+        self.items_url,
+        {"product_id": str(self.product.id), "quantity": 2},
+        format="json",
+    )
+    initial_stock = self.product.stock
+
+    self.client.post("/api/cart/items/checkout/")
+
+    self.product.refresh_from_db()
+    self.assertEqual(self.product.stock, initial_stock)
