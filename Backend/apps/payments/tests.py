@@ -358,7 +358,7 @@ class CheckoutStatusViewTests(APITestCase):
         self.client.force_authenticate(user=self.user)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["status"], "pending")
+        self.assertEqual(response.data["status"], "pending_payment")
 
     def test_returns_real_status_once_webhook_landed(self):
         Payment.objects.create(

@@ -4,6 +4,8 @@ import requests as requests_lib
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from datetime import timedelta  
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -26,19 +28,20 @@ def initiate_checkout(request):
     serializer = InitiateCheckoutSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     order_id = serializer.validated_data["order_id"]
-
-    # El filtro por buyer=request.user es la pieza de seguridad clave:
-    # nadie puede iniciar un checkout de un pedido que no es suyo.
     order = get_object_or_404(Order, id=order_id, buyer=request.user)
+
+    if (
+        order.status == "pending_payment"
+        and order.stock_reserved_until
+        and timezone.now() > order.stock_reserved_until
+    ):
+        order.mark_as_payment_failed()
 
     if order.status != "pending_payment":
         return Response(
-            {
-                "detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"
-            },
+            {"detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"},
             status=status.HTTP_400_BAD_REQUEST,
         )
-
     frontend_url = getattr(settings, "FRONTEND_URL", None)
     complete_url = (
         f"{frontend_url}/payments/confirmacion?reference={order.id}"
@@ -52,7 +55,7 @@ def initiate_checkout(request):
     try:
         result = build_checkout_page(
             reference=str(order.id),
-            amount=float(order.total),  # <- viene del servidor, no del request
+            amount=float(order.total),  
             currency="COP",
             country="CO",
             user_id=request.user.id,
@@ -75,13 +78,26 @@ def initiate_checkout(request):
     )
 
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def checkout_status(request, reference):
     """
     El frontend hace polling aquí después de que Rapyd redirige al
     comprador de vuelta — el webhook puede no haber llegado todavía.
+    De paso, libera reservas de stock expiradas (RF-08): si nadie
+    consulta una orden vencida, no se libera sola, pero es un
+    trade-off aceptado para el MVP sin Celery.
     """
+    order = Order.objects.filter(id=reference).first()
+    if (
+        order
+        and order.status == "pending_payment"
+        and order.stock_reserved_until
+        and timezone.now() > order.stock_reserved_until
+    ):
+        order.mark_as_payment_failed()
+
     payment = (
         Payment.objects.filter(merchant_reference_id=reference)
         .order_by("-created_at")
@@ -89,7 +105,7 @@ def checkout_status(request, reference):
     )
 
     if not payment:
-        return Response({"reference": reference, "status": "pending"})
+        return Response({"reference": reference, "status": order.status if order else "pending"})
 
     if (
         payment.user_id
@@ -99,7 +115,6 @@ def checkout_status(request, reference):
         return Response({"detail": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
     return Response(PaymentStatusSerializer(payment).data)
-
 
 @api_view(["POST"])
 @permission_classes([AllowAny])

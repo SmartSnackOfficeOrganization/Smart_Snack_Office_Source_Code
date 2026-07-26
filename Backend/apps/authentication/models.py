@@ -142,14 +142,36 @@ class Order(models.Model):
 
     def mark_as_paid(self, transaction_id: str) -> None:
         """
-        Marca la orden como pagada y descuenta el stock reservado de
-        cada producto involucrado, dentro de una transacción atómica
-        con bloqueo de fila (RNF-17). Idempotente: si la orden ya está
-        en un estado final, no hace nada — protege contra reintentos
-        del webhook de pago.
+        El stock ya se descontó al reservar en el checkout — aquí solo se
+        confirma la orden, no se vuelve a tocar el stock.
         """
         from django.db import transaction
 
+        final_states = ("paid", "payment_failed", "cancelled", "refunded")
+        if self.status in final_states:
+            return
+
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(id=self.id)
+            if order.status in final_states:
+                return
+
+            order.status = "paid"
+            order.transaction_id = transaction_id
+            order.stock_reserved_until = None
+            order.save(update_fields=["status", "transaction_id", "stock_reserved_until"])
+
+            self.status = order.status
+            self.transaction_id = order.transaction_id
+            self.stock_reserved_until = order.stock_reserved_until
+
+
+    def mark_as_payment_failed(self) -> None:
+        """
+        Libera el stock reservado — el pago falló, así que lo que se
+        descontó en el checkout debe devolverse.
+        """
+        from django.db import transaction
         from apps.catalog.models import Product
 
         final_states = ("paid", "payment_failed", "cancelled", "refunded")
@@ -163,36 +185,8 @@ class Order(models.Model):
 
             for item in order.items.select_related("product"):
                 product = Product.objects.select_for_update().get(id=item.product_id)
-                product.stock = max(product.stock - item.quantity, 0)
+                product.stock += item.quantity
                 product.save(update_fields=["stock"])
-
-            order.status = "paid"
-            order.transaction_id = transaction_id
-            order.stock_reserved_until = None
-            order.save(
-                update_fields=["status", "transaction_id", "stock_reserved_until"]
-            )
-
-            self.status = order.status
-            self.transaction_id = order.transaction_id
-            self.stock_reserved_until = order.stock_reserved_until
-
-    def mark_as_payment_failed(self) -> None:
-        """
-        Marca la orden como fallida por rechazo/error/expiración del
-        pago. No toca el stock (nunca se descontó, seguía reservado
-        hasta este punto). Idempotente, igual que mark_as_paid.
-        """
-        from django.db import transaction
-
-        final_states = ("paid", "payment_failed", "cancelled", "refunded")
-        if self.status in final_states:
-            return
-
-        with transaction.atomic():
-            order = Order.objects.select_for_update().get(id=self.id)
-            if order.status in final_states:
-                return
 
             order.status = "payment_failed"
             order.stock_reserved_until = None

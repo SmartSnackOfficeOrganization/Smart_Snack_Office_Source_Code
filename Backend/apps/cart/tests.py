@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
-
+from datetime import timedelta
+from django.utils import timezone
 from apps.catalog.models import Product
-from apps.orders.models import Order
+from apps.orders.models import Order, OrderItem
 
 from .models import Cart, CartItem
 
@@ -221,3 +222,102 @@ def test_checkout_does_not_decrement_stock_directly(self):
 
     self.product.refresh_from_db()
     self.assertEqual(self.product.stock, initial_stock)
+
+class StockReservationTests(APITestCase):
+    def setUp(self):
+        self.buyer = make_user("reserva_buyer@test.com", role="buyer")
+        self.seller = make_user("reserva_seller@test.com", role="seller")
+        from apps.authentication.models import BuyerProfile  # ajusta si vive en otro módulo
+        BuyerProfile.objects.get_or_create(
+            user=self.buyer, defaults={"delivery_address": "Calle 123 #45-67"}
+        )
+        self.product = Product.objects.create(
+            seller=self.seller, name="Barra", price=Decimal("1000.00"),
+            stock=5, status="active",
+        )
+        self.items_url = reverse("cart-items-list")
+
+    def _add_to_cart_and_checkout(self, quantity=2):
+        self.client.force_authenticate(user=self.buyer)
+        self.client.post(
+            self.items_url,
+            {"product_id": str(self.product.id), "quantity": quantity},
+            format="json",
+        )
+        return self.client.post("/api/cart/items/checkout/")
+
+    def test_checkout_reserves_stock_immediately(self):
+        initial_stock = self.product.stock
+        response = self._add_to_cart_and_checkout(quantity=2)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, initial_stock - 2)
+
+    def test_checkout_sets_reservation_expiry(self):
+        response = self._add_to_cart_and_checkout(quantity=1)
+        order = Order.objects.get(id=response.data["id"])
+
+        self.assertIsNotNone(order.stock_reserved_until)
+        self.assertGreater(order.stock_reserved_until, timezone.now())
+        self.assertLess(order.stock_reserved_until, timezone.now() + timedelta(minutes=16))
+
+    def test_checkout_rejects_when_insufficient_stock(self):
+        response = self._add_to_cart_and_checkout(quantity=999)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, 5)  # sin cambios
+
+
+class LazyExpirationTests(APITestCase):
+    def setUp(self):
+        self.buyer = make_user("expira_buyer@test.com", role="buyer")
+        self.seller = make_user("expira_seller@test.com", role="seller")
+        self.product = Product.objects.create(
+            seller=self.seller, name="Chips", price=Decimal("2000.00"),
+            stock=10, status="active",
+        )
+        self.order = Order.objects.create(
+            buyer=self.buyer, status="pending_payment",
+            delivery_address="Calle 123", subtotal=Decimal("4000.00"),
+            total=Decimal("4000.00"),
+            stock_reserved_until=timezone.now() - timedelta(minutes=1),  # ya vencida
+        )
+        OrderItem.objects.create(
+            order=self.order, product=self.product, seller=self.seller,
+            quantity=2, unit_price=Decimal("2000.00"), subtotal=Decimal("4000.00"),
+        )
+        self.product.stock -= 2  # simula que ya se había reservado
+        self.product.save(update_fields=["stock"])
+
+    def test_checking_status_releases_expired_reservation(self):
+        self.client.force_authenticate(user=self.buyer)
+        response = self.client.get(f"/api/payments/status/{self.order.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.order.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(self.order.status, "payment_failed")
+        self.assertEqual(self.product.stock, 10)  # se liberó
+
+    def test_non_expired_reservation_is_not_released(self):
+        self.order.stock_reserved_until = timezone.now() + timedelta(minutes=10)
+        self.order.save(update_fields=["stock_reserved_until"])
+
+        self.client.force_authenticate(user=self.buyer)
+        self.client.get(f"/api/payments/status/{self.order.id}/")
+
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, "pending_payment")  # sin cambios
+
+    def test_initiate_checkout_releases_and_rejects_expired_order(self):
+        self.client.force_authenticate(user=self.buyer)
+        response = self.client.post(
+            "/api/payments/checkout/", {"order_id": str(self.order.id)}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.order.refresh_from_db()
+        self.product.refresh_from_db()
+        self.assertEqual(self.order.status, "payment_failed")
+        self.assertEqual(self.product.stock, 10)

@@ -2,11 +2,13 @@ from decimal import Decimal
 
 from django.db import transaction
 from django.db.models import Sum
+from datetime import timedelta
+from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
+from apps.catalog.models import Product
 from apps.orders.models import Order, OrderItem
 from apps.orders.serializers import OrderSerializer
 
@@ -54,53 +56,65 @@ class CartItemViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+
     @action(detail=False, methods=["post"], url_path="checkout")
     def checkout(self, request):
         buyer = request.user
         profile = getattr(buyer, "buyer_profile", None)
         if not profile or not profile.delivery_address:
             return Response(
-                {
-                    "detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."
-                },
+                {"detail": "Debes configurar una dirección de entrega en tu perfil antes de confirmar el pedido."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         cart = self._get_or_create_cart()
-        cart_items = CartItem.objects.filter(cart=cart).select_related(
-            "product__seller"
-        )
+        cart_items = CartItem.objects.filter(cart=cart).select_related("product__seller")
 
         if not cart_items:
-            return Response(
-                {"detail": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"detail": "El carrito está vacío."}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            subtotal = sum(
-                Decimal(str(item.unit_price)) * item.quantity for item in cart_items
-            )
+
+            product_ids = [item.product_id for item in cart_items]
+            products = {
+                p.id: p for p in Product.objects.select_for_update().filter(id__in=product_ids)
+            }
+
+            for item in cart_items:
+                product = products[item.product_id]
+                if product.stock < item.quantity:
+                    return Response(
+                        {"detail": f"Stock insuficiente para {product.name}."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            subtotal = sum(Decimal(str(item.unit_price)) * item.quantity for item in cart_items)
             tax = (subtotal * Decimal("0.19")).quantize(Decimal("0.01"))
             total = subtotal + tax
 
             order = Order.objects.create(
                 buyer=buyer,
-                status="pending_payment",  # <- el único cambio real
+                status="pending_payment",
                 delivery_address=profile.delivery_address,
                 subtotal=subtotal,
                 tax=tax,
                 total=total,
+                stock_reserved_until=timezone.now() + timedelta(minutes=15),
             )
 
             for item in cart_items:
+                product = products[item.product_id]
                 OrderItem.objects.create(
                     order=order,
-                    product=item.product,
-                    seller=item.product.seller,
+                    product=product,
+                    seller=product.seller,
                     quantity=item.quantity,
                     unit_price=item.unit_price,
                     subtotal=Decimal(str(item.unit_price)) * item.quantity,
                 )
+                # Reserva = descuento inmediato, no esperamos al pago
+                product.stock -= item.quantity
+                product.save(update_fields=["stock"])
 
             cart_items.delete()
 
