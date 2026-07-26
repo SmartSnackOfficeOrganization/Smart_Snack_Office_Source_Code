@@ -1,11 +1,12 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
-from datetime import timedelta
-from django.utils import timezone
+
 from apps.catalog.models import Product
 from apps.orders.models import Order, OrderItem
 
@@ -223,17 +224,24 @@ def test_checkout_does_not_decrement_stock_directly(self):
     self.product.refresh_from_db()
     self.assertEqual(self.product.stock, initial_stock)
 
+
 class StockReservationTests(APITestCase):
     def setUp(self):
         self.buyer = make_user("reserva_buyer@test.com", role="buyer")
         self.seller = make_user("reserva_seller@test.com", role="seller")
-        from apps.authentication.models import BuyerProfile  # ajusta si vive en otro módulo
+        from apps.authentication.models import (  # ajusta si vive en otro módulo
+            BuyerProfile,
+        )
+
         BuyerProfile.objects.get_or_create(
             user=self.buyer, defaults={"delivery_address": "Calle 123 #45-67"}
         )
         self.product = Product.objects.create(
-            seller=self.seller, name="Barra", price=Decimal("1000.00"),
-            stock=5, status="active",
+            seller=self.seller,
+            name="Barra",
+            price=Decimal("1000.00"),
+            stock=5,
+            status="active",
         )
         self.items_url = reverse("cart-items-list")
 
@@ -260,7 +268,9 @@ class StockReservationTests(APITestCase):
 
         self.assertIsNotNone(order.stock_reserved_until)
         self.assertGreater(order.stock_reserved_until, timezone.now())
-        self.assertLess(order.stock_reserved_until, timezone.now() + timedelta(minutes=16))
+        self.assertLess(
+            order.stock_reserved_until, timezone.now() + timedelta(minutes=16)
+        )
 
     def test_checkout_rejects_when_insufficient_stock(self):
         response = self._add_to_cart_and_checkout(quantity=999)
@@ -274,18 +284,27 @@ class LazyExpirationTests(APITestCase):
         self.buyer = make_user("expira_buyer@test.com", role="buyer")
         self.seller = make_user("expira_seller@test.com", role="seller")
         self.product = Product.objects.create(
-            seller=self.seller, name="Chips", price=Decimal("2000.00"),
-            stock=10, status="active",
+            seller=self.seller,
+            name="Chips",
+            price=Decimal("2000.00"),
+            stock=10,
+            status="active",
         )
         self.order = Order.objects.create(
-            buyer=self.buyer, status="pending_payment",
-            delivery_address="Calle 123", subtotal=Decimal("4000.00"),
+            buyer=self.buyer,
+            status="pending_payment",
+            delivery_address="Calle 123",
+            subtotal=Decimal("4000.00"),
             total=Decimal("4000.00"),
             stock_reserved_until=timezone.now() - timedelta(minutes=1),  # ya vencida
         )
         OrderItem.objects.create(
-            order=self.order, product=self.product, seller=self.seller,
-            quantity=2, unit_price=Decimal("2000.00"), subtotal=Decimal("4000.00"),
+            order=self.order,
+            product=self.product,
+            seller=self.seller,
+            quantity=2,
+            unit_price=Decimal("2000.00"),
+            subtotal=Decimal("4000.00"),
         )
         self.product.stock -= 2  # simula que ya se había reservado
         self.product.save(update_fields=["stock"])

@@ -1,6 +1,7 @@
 # apps/orders/tasks.py (nuevo archivo)
 from celery import shared_task
 from django.utils import timezone
+
 from .models import Order
 
 

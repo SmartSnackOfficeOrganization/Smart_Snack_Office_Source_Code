@@ -1,10 +1,10 @@
 import logging
+from datetime import timedelta
 
 import requests as requests_lib
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from datetime import timedelta  
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, throttle_classes
@@ -39,7 +39,9 @@ def initiate_checkout(request):
 
     if order.status != "pending_payment":
         return Response(
-            {"detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"},
+            {
+                "detail": f"Esta orden no está pendiente de pago (estado actual: {order.status})"
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
     frontend_url = getattr(settings, "FRONTEND_URL", None)
@@ -55,7 +57,7 @@ def initiate_checkout(request):
     try:
         result = build_checkout_page(
             reference=str(order.id),
-            amount=float(order.total),  
+            amount=float(order.total),
             currency="COP",
             country="CO",
             user_id=request.user.id,
@@ -76,7 +78,6 @@ def initiate_checkout(request):
         {"reference": str(order.id), "checkout_url": result["data"]["redirect_url"]},
         status=status.HTTP_201_CREATED,
     )
-
 
 
 @api_view(["GET"])
@@ -105,7 +106,9 @@ def checkout_status(request, reference):
     )
 
     if not payment:
-        return Response({"reference": reference, "status": order.status if order else "pending"})
+        return Response(
+            {"reference": reference, "status": order.status if order else "pending"}
+        )
 
     if (
         payment.user_id
@@ -115,6 +118,7 @@ def checkout_status(request, reference):
         return Response({"detail": "No autorizado"}, status=status.HTTP_403_FORBIDDEN)
 
     return Response(PaymentStatusSerializer(payment).data)
+
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
