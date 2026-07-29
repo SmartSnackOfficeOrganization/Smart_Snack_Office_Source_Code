@@ -55,10 +55,6 @@ class Payment(models.Model):
         help_text="Orden asociada si corresponde (UUID)",
     )
 
-    customer_token = models.CharField(
-        max_length=255, db_index=True, help_text="Token del cliente en Rapyd"
-    )
-
     # Detalles financieros
     amount = models.DecimalField(
         max_digits=15, decimal_places=2, help_text="Monto del pago"

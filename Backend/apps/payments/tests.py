@@ -264,6 +264,11 @@ class PaymentCallbackViewTests(APITestCase):
 
 class InitiateCheckoutViewTests(APITestCase):
     def setUp(self):
+        from decimal import Decimal
+
+        from apps.authentication.models import BuyerProfile
+        from apps.orders.models import Order
+
         self.user = User.objects.create_user(
             email="buyer@test.com",
             full_name="Buyer",
@@ -271,11 +276,9 @@ class InitiateCheckoutViewTests(APITestCase):
             password="ClaveSegura123",
             is_active=True,
         )
-        # Crear el perfil de comprador (necesario para checkout)
         self.buyer_profile = BuyerProfile.objects.create(
             user=self.user, delivery_address="Calle 123"
         )
-        # Crear una Order en estado pending_payment
         self.order = Order.objects.create(
             buyer=self.user,
             status="pending_payment",
@@ -363,6 +366,11 @@ class InitiateCheckoutViewTests(APITestCase):
         response = self.client.post(
             self.url, {"order_id": str(self.order.id)}, format="json"
         )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_rejects_missing_order_id(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
