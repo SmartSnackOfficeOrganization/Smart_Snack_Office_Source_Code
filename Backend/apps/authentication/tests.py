@@ -21,12 +21,25 @@ from .token import AccountActivationTokenGenetator
 
 def extract_url(text):
     """Extrae la primera URL http(s) de un bloque de texto."""
-    match = re.search(r"https?://[^\s]+", text)
-    return match.group(0) if match else None
+    match = re.search(r"https?://[^\s<>\"']+", text)
+    return match.group(0).rstrip(".,);") if match else None
 
 
 def url_to_path(full_url):
-    return urlparse(full_url).path
+    """
+    Convierte una URL absoluta en path para el test client.
+
+    El email de activación apunta al frontend (/activate/<uid>/<token>/);
+    el endpoint real de API es /api/auth/activate/<uid>/<token>/.
+    """
+    parsed = urlparse(full_url)
+    parts = [p for p in parsed.path.strip("/").split("/") if p]
+    if len(parts) >= 3 and parts[0] == "activate":
+        return reverse(
+            "activate_account",
+            kwargs={"uidb64": parts[1], "token": parts[2]},
+        )
+    return parsed.path
 
 
 def make_active_user(
@@ -152,19 +165,11 @@ class BuyerRegistrationSuccessFlowTests(APITestCase):
 
     @staticmethod
     def _extract_url(text):
-        """Extrae la primera URL http(s) encontrada en un bloque de texto."""
-        import re
-
-        match = re.search(r"https?://[^\s]+", text)
-        return match.group(0) if match else None
+        return extract_url(text)
 
     @staticmethod
     def _url_to_path(full_url):
-        """Convierte una URL absoluta (http://host:puerto/path/) en solo el path,
-        que es lo que self.client.get() espera."""
-        from urllib.parse import urlparse
-
-        return urlparse(full_url).path
+        return url_to_path(full_url)
 
 
 # ---------------------------------------------------------------------------
