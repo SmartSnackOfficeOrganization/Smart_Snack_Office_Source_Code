@@ -15,16 +15,25 @@ Búsqueda en dos etapas sobre el catálogo:
 - **Archivos:** `search_service.py`, `search_serializers.py`, `search_views.py`,
   `urls.py`, `tests_search.py`.
 - **Modelo consumido:** `apps.catalog.models.Product` (la app no define modelos propios).
+- **`is_compatible`:** compara `BuyerProfile.allergies` con tags del producto
+  (misma regla que el carrito); `null` si no hay usuario/perfil.
+
+## Recomendaciones personalizadas (HU-07 / Item-Based CF)
+
+Item-Based Collaborative Filtering sobre compras (`OrderItem` en estados
+`paid`/`shipped`/`delivered`) y calificaciones (`Review.rating`).
+
+1. Matriz usuario–ítem → similitud coseno ítem–ítem (`ml/recommend/item_cf_engine.py`).
+2. Ranking por afinidad para el comprador autenticado.
+3. Excluye productos ya comprados/calificados, suspendidos y los que violan alergias.
+4. Si CF no alcanza el mínimo, completa con popularidad (`avg_rating` / `review_count`).
+5. Cache de la matriz de similitud (`item_cf:item_similarity:v1`, TTL 300s).
+
+- **Endpoint:** `GET /api/catalog/recommendations/?limit=5` (buyer autenticado).
+- **Elegibilidad:** ≥1 compra relevante **o** ≥1 review; si no, `eligible: false`.
+- **Archivos:** `recommendation_service.py`, `recommendation_serializers.py`,
+  `recommendation_views.py`, `tests_recommendations.py`, `tests_item_cf_engine.py`.
 
 ### Notas de infraestructura
 - `ml/` se monta en el contenedor vía `- ./ml:/app/ml` en `Docker-compose.yml`.
 - `scikit-learn` está en `Backend/requirements.txt`.
-
-### Limitaciones / TODO
-- `is_compatible` sale `null` (placeholder): el marcado por restricciones
-  alimentarias (RF-04) depende de HU-06/RF-09, que aún no tiene modelo.
-
-## Recomendaciones (HU-07 / Item-based CF) — pendiente
-
-Cuando se implemente: el modelo entrenado va en `ml/`, y el servicio + la vista
-DRF en esta app, reutilizando el mismo patrón (motor en `ml/` + servicio + vista).

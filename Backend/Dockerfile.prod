@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY Backend/requirements.txt /app/
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r /app/requirements.txt gunicorn whitenoise
+    pip install --no-cache-dir -r /app/requirements.txt gunicorn
 
 COPY Backend/ /app/
 COPY ml/ /app/ml/

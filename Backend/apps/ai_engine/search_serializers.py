@@ -2,8 +2,8 @@
 Serializer de resultados de búsqueda de la HU-05.
 
 Devuelve una vista ligera del producto pensada para el listado de resultados,
-más los metadatos de la búsqueda (``relevance_score``, ``match_stage``) y el
-placeholder de compatibilidad alimentaria (``is_compatible``).
+más los metadatos de la búsqueda (``relevance_score``, ``match_stage``) y
+compatibilidad alimentaria (``is_compatible``) frente a ``BuyerProfile.allergies``.
 """
 
 from rest_framework import serializers
@@ -52,5 +52,4 @@ class SearchResultSerializer(serializers.ModelSerializer):
         return getattr(obj, "match_stage", None)
 
     def get_is_compatible(self, obj):
-        # Placeholder; ver search_service._evaluate_compatibility (TODO HU-06/RF-09).
         return getattr(obj, "is_compatible", None)

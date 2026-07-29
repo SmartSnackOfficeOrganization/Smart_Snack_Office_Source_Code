@@ -7,9 +7,9 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.urls import reverse
 from django.utils.encoding import force_bytes
+from django.utils.html import strip_tags
 from django.utils.http import urlsafe_base64_encode
 from django.utils.timezone import now
-from django.utils.html import strip_tags
 from rest_framework import serializers
 
 from .models import BuyerProfile, SellerProfile, User

@@ -11,8 +11,8 @@ Implementa la lógica de dos etapas del RF-04:
 Cada producto devuelto se anota (en memoria, sin tocar la BD) con:
   - ``relevance_score``: score TF-IDF (None en la etapa literal).
   - ``match_stage``: "literal" o "tfidf".
-  - ``is_compatible``: placeholder de compatibilidad con restricciones
-    alimentarias (ver TODO; el modelo de restricciones aún no existe).
+  - ``is_compatible``: compatibilidad con ``BuyerProfile.allergies`` (None si
+    no hay usuario/perfil).
 
 Vive en la app ``ai_engine`` (features de IA del backend). El modelo ``Product``
 pertenece a la app ``catalog``.
@@ -26,6 +26,7 @@ from typing import List, Optional
 
 from django.db.models import Q
 
+from apps.catalog.allergies import product_is_compatible
 from apps.catalog.models import Product
 
 # --- Shim de importación de `ml/` -------------------------------------------
@@ -68,15 +69,21 @@ def _build_document(product: Product) -> str:
 
 def _evaluate_compatibility(product: Product, user) -> Optional[bool]:
     """
-    Placeholder de compatibilidad con las restricciones alimentarias del comprador.
+    Compatibilidad con ``BuyerProfile.allergies`` (tags del producto).
 
-    TODO(HU-06 / RF-09): el modelo de restricciones alimentarias del comprador
-    todavía no existe en el proyecto. Cuando exista, aquí se deben comparar los
-    ingredientes/etiquetas del producto contra las restricciones del ``user`` y
-    devolver True/False. Por ahora se devuelve None ("no evaluado") para que el
-    frontend pueda cablear el marcado visual sin romperse.
+    - ``None`` si no hay usuario autenticado o no tiene perfil de comprador.
+    - ``True``/``False`` según coincidencia alergias ↔ tags (misma regla del carrito).
     """
-    return None
+    if user is None:
+        return None
+    profile = getattr(user, "buyer_profile", None)
+    if profile is None:
+        return None
+    allergies = profile.allergies or []
+    if not allergies:
+        return True
+    tag_names = [tag.name for tag in product.tags.all()]
+    return product_is_compatible(allergies, tag_names)
 
 
 def _annotate(product: Product, score: Optional[float], stage: str, user) -> Product:

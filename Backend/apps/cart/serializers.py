@@ -1,6 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.catalog.allergies import matching_allergens
 from apps.catalog.models import Product
 from apps.catalog.serializers import ProductSerializer
 
@@ -89,11 +90,7 @@ class CartItemSerializer(serializers.ModelSerializer):
             profile = getattr(buyer, "buyer_profile", None)
             if profile and profile.allergies:
                 product_tags = list(product.tags.values_list("name", flat=True))
-                matched = [
-                    tag
-                    for tag in profile.allergies
-                    if tag.lower() in [t.lower() for t in product_tags]
-                ]
+                matched = matching_allergens(profile.allergies, product_tags)
                 if matched:
                     raise serializers.ValidationError(
                         {

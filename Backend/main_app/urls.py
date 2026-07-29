@@ -42,5 +42,5 @@ urlpatterns = [
     path("api/cart/", include("apps.cart.urls")),
     path("api/", include("apps.orders.urls")),
     path("api/payments/", include("apps.payments.urls")),
-    path('health/', lambda r: JsonResponse({"status": "ok"})),
+    path("health/", lambda r: JsonResponse({"status": "ok"})),
 ]
