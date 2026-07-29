@@ -86,9 +86,7 @@ class OrderGenerator:
         CartItem.objects.filter(cart=cart).delete()
 
         cart_size = self._sample_cart_size()
-        chosen = self._sample_products(
-            product_meta, persona_keys, allergies, cart_size
-        )
+        chosen = self._sample_products(product_meta, persona_keys, allergies, cart_size)
         if not chosen:
             return None
 

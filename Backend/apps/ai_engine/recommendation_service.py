@@ -272,9 +272,7 @@ def get_recommendations(user, limit: int = DEFAULT_LIMIT) -> RecommendationResul
     if len(selected) < limit:
         fallback_exclude = exclude_ids | selected_ids
         selected.extend(
-            _popularity_candidates(
-                fallback_exclude, allergies, limit - len(selected)
-            )
+            _popularity_candidates(fallback_exclude, allergies, limit - len(selected))
         )
 
     return RecommendationResult(eligible=True, products=selected)

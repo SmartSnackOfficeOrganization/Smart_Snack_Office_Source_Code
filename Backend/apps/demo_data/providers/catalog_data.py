@@ -208,9 +208,7 @@ def random_address(rng: random.Random) -> str:
     return rng.choice(ADDRESSES)
 
 
-def build_product_spec(
-    rng: random.Random, category_name: str, index: int
-) -> dict:
+def build_product_spec(rng: random.Random, category_name: str, index: int) -> dict:
     templates = PRODUCT_TEMPLATES.get(category_name) or PRODUCT_TEMPLATES["Otros"]
     template = rng.choice(templates)
     flavor = rng.choice(template["flavors"])
