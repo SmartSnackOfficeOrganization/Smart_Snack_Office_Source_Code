@@ -44,7 +44,9 @@ def register_buyer(request):
         serializer.save()
         response_data = {"message": "Buyer account created successfully"}
         if settings.DEBUG:
-            response_data["activation_url"] = getattr(serializer, "_activation_url", None)
+            response_data["activation_url"] = getattr(
+                serializer, "_activation_url", None
+            )
         return Response(response_data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
