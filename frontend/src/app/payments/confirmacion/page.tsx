@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
 import { PaymentStatusIcon } from "@/components/payments/PaymentStatusIcon";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,7 @@ const MAX_POLL_ATTEMPTS = 20; // ~40 segundos antes de mostrar el fallback
 
 type ViewState = "checking" | "pending" | "success" | "failed" | "timeout" | "network-error";
 
-export default function PaymentConfirmationPage() {
+function PaymentConfirmationContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference") ?? "";
 
@@ -163,5 +163,13 @@ export default function PaymentConfirmationPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PaymentConfirmationPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaymentConfirmationContent />
+    </Suspense>
   );
 }

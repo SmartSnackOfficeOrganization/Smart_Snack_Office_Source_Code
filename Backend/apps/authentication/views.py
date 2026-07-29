@@ -42,13 +42,10 @@ def register_buyer(request):
     serializer = BuyerRegistrationSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response(
-            {
-                "message": "Buyer account created successfully",
-                "activation_url": getattr(serializer, "_activation_url", None),
-            },
-            status=status.HTTP_201_CREATED,
-        )
+        response_data = {"message": "Buyer account created successfully"}
+        if settings.DEBUG:
+            response_data["activation_url"] = getattr(serializer, "_activation_url", None)
+        return Response(response_data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -185,13 +182,12 @@ def forgot_password(request):
                 [user.email],
                 fail_silently=False,
             )
-            return Response(
-                {
-                    "message": "Si el correo es válido, se envió un enlace de recuperación.",
-                    "reset_url": reset_url,
-                },
-                status=status.HTTP_200_OK,
-            )
+            response_data = {
+                "message": "Si el correo es válido, se envió un enlace de recuperación."
+            }
+            if settings.DEBUG:
+                response_data["reset_url"] = reset_url
+            return Response(response_data, status=status.HTTP_200_OK)
 
         return Response(
             {"message": "Si el correo es válido, se envió un enlace de recuperación."},

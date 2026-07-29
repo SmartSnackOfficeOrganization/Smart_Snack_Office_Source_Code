@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { SmartSnackLogo } from "@/components/layout/SmartSnackLogo";
@@ -7,7 +8,7 @@ import { PaymentStatusIcon } from "@/components/payments/PaymentStatusIcon";
 import { Button } from "@/components/ui/Button";
 import { getAuthSession } from "@/lib/auth/session";
 
-export default function PaymentErrorPage() {
+function PaymentErrorContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get("reference");
   const session = getAuthSession();
@@ -49,5 +50,13 @@ export default function PaymentErrorPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function PaymentErrorPage() {
+  return (
+    <Suspense fallback={null}>
+      <PaymentErrorContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,3 @@
-import { Button } from "@/components/ui/Button";
-
 interface SortSelectProps {
   value: string;
   onChange: (value: string) => void;

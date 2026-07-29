@@ -314,6 +314,37 @@ class InitiateCheckoutViewTests(APITestCase):
         mock_build.assert_called_once()
         self.assertEqual(mock_build.call_args.kwargs["user_id"], self.user.id)
         self.assertEqual(mock_build.call_args.kwargs["amount"], 45000.0)
+        self.assertIsNone(mock_build.call_args.kwargs["complete_url"])
+        self.assertIsNone(mock_build.call_args.kwargs["error_url"])
+
+    @override_settings(FRONTEND_URL="https://app.smartsnack.test")
+    @patch("apps.payments.views.build_checkout_page")
+    def test_uses_redirect_urls_when_frontend_url_is_public(self, mock_build):
+        order = Order.objects.create(
+            buyer=self.user,
+            status="pending_payment",
+            delivery_address="Calle 123",
+            subtotal=Decimal("45000.00"),
+            total=Decimal("45000.00"),
+        )
+        mock_build.return_value = {
+            "data": {"redirect_url": "https://sandboxcheckout.rapyd.net/xyz"}
+        }
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            self.url, {"order_id": str(order.id)}, format="json"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED, response.data)
+        self.assertEqual(
+            mock_build.call_args.kwargs["complete_url"],
+            f"https://app.smartsnack.test/payments/confirmacion?reference={order.id}",
+        )
+        self.assertEqual(
+            mock_build.call_args.kwargs["error_url"],
+            f"https://app.smartsnack.test/payments/error?reference={order.id}",
+        )
 
     def test_anonymous_cannot_initiate_checkout(self):
         response = self.client.post(

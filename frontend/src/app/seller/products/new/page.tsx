@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { ProductForm } from "@/components/seller/ProductForm";
 import { getAuthSession } from "@/lib/auth/session";
 import { createProduct, SellerCatalogError } from "@/lib/seller/catalog";
-import { CreateProductData } from "@/lib/seller/catalog.types";
+import { CreateProductData, UpdateProductData } from "@/lib/seller/catalog.types";
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -19,9 +19,17 @@ export default function NewProductPage() {
     }
   }, [router]);
 
-  async function handleSubmit(data: CreateProductData) {
+  async function handleSubmit(data: CreateProductData | UpdateProductData) {
+    if (
+      !data.name ||
+      typeof data.price !== "number" ||
+      typeof data.stock !== "number"
+    ) {
+      throw new Error("Faltan campos obligatorios para crear el producto.");
+    }
+
     try {
-      await createProduct(data);
+      await createProduct(data as CreateProductData);
       router.push("/seller/products");
     } catch (err) {
       if (err instanceof SellerCatalogError) {

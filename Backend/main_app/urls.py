@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import include, path
 from rest_framework_simplejwt.views import (
     TokenBlacklistView,
@@ -41,4 +42,5 @@ urlpatterns = [
     path("api/cart/", include("apps.cart.urls")),
     path("api/", include("apps.orders.urls")),
     path("api/payments/", include("apps.payments.urls")),
+    path('health/', lambda r: JsonResponse({"status": "ok"})),
 ]

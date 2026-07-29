@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlparse
 
 import requests as requests_lib
 from django.conf import settings
@@ -17,6 +18,29 @@ from .serializers import InitiateCheckoutSerializer, PaymentStatusSerializer
 from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook
 
 logger = logging.getLogger(__name__)
+
+
+def _is_public_http_url(url: str) -> bool:
+    """
+    Rapyd puede rechazar URLs locales/privadas en redirect URLs.
+    Solo enviamos URLs http(s) con host público.
+    """
+    if not url:
+        return False
+
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+
+    hostname = (parsed.hostname or "").lower()
+    if not hostname:
+        return False
+
+    blocked_hosts = {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+    if hostname in blocked_hosts:
+        return False
+
+    return True
 
 
 @api_view(["POST"])
@@ -40,6 +64,13 @@ def initiate_checkout(request):
         )
 
     frontend_url = getattr(settings, "FRONTEND_URL", None)
+    if frontend_url and not _is_public_http_url(frontend_url):
+        logger.info(
+            "FRONTEND_URL no pública (%s). Se omiten complete/error URL en checkout.",
+            frontend_url,
+        )
+        frontend_url = None
+
     complete_url = (
         f"{frontend_url}/payments/confirmacion?reference={order.id}"
         if frontend_url
