@@ -6,7 +6,6 @@ from apps.catalog.models import Review
 from apps.demo_data.config import DemoDataConfig
 from apps.orders.models import Order
 
-
 REVIEW_COMMENTS = [
     "Excelente para la oficina, lo volveremos a pedir.",
     "Buena relacion calidad-precio.",

@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-
 DEMO_EMAIL_DOMAIN = "demo.smartsnack.local"
 
 
