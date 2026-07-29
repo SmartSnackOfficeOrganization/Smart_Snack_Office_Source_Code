@@ -12,6 +12,7 @@ from datetime import timezone as dt_timezone
 
 import requests
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 from .models import Payment
 
@@ -164,10 +165,18 @@ def process_payment_webhook(webhook_data: dict, user_id: str = None) -> dict:
                 pass
 
         merchant_reference_id = payment_data.get("merchant_reference_id", "")
-
         from apps.orders.models import Order
 
-        order = Order.objects.filter(id=merchant_reference_id).first()
+        order = None
+        if merchant_reference_id:
+            try:
+                order = Order.objects.filter(id=merchant_reference_id).first()
+            except (ValueError, ValidationError):
+                logger.warning(
+                    "merchant_reference_id no es un UUID válido: %s",
+                    merchant_reference_id,
+                )
+
         if not order:
             logger.warning(
                 "Webhook recibido sin Order asociado: %s", merchant_reference_id

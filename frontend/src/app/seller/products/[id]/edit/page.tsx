@@ -13,6 +13,7 @@ import {
   SellerCatalogError,
 } from "@/lib/seller/catalog";
 import { SellerProduct } from "@/lib/seller/catalog.types";
+import { CreateProductData } from "@/lib/seller/catalog.types"
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function EditProductPage() {
     })();
   }, [router, id]);
 
-  async function handleSubmit(data: Record<string, unknown>) {
+  async function handleSubmit(data: CreateProductData | Partial<CreateProductData>) {
     try {
       await updateProduct(id, data);
       router.push("/seller/products");

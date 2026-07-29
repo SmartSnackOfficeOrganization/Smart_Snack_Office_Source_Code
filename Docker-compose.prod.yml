@@ -1,0 +1,72 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: smartsnack_db
+    restart: unless-stopped
+    env_file:
+      - ./Backend/.env.prod
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Sin "ports": la DB no debe quedar expuesta al host/internet, solo accesible entre contenedores
+
+  backend:
+    build:
+      context: .
+      dockerfile: Backend/Dockerfile.prod
+    container_name: smartsnack_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./Backend/.env.prod
+    environment:
+      CACHE_LOCATION: cache:6379
+      DJANGO_DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+
+  cache:
+    image: redis:7-alpine
+    container_name: smartsnack_redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Sin "ports": mismo motivo que db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_USE_MOCK_AUTH: "false"
+    container_name: smartsnack_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_USE_MOCK_AUTH=false
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.timezone import now
+from django.utils.html import strip_tags
 from rest_framework import serializers
 
 from .models import BuyerProfile, SellerProfile, User
@@ -20,16 +21,37 @@ def send_activation_email(user):
     token_generator = AccountActivationTokenGenetator()
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     token = token_generator.make_token(user)
-    activation_path = reverse(
-        "activate_account", kwargs={"uidb64": uid, "token": token}
-    )
-    activation_link = urljoin(f"{settings.BACKEND_URL.rstrip('/')}/", activation_path)
+    frontend_url = settings.FRONTEND_URL.rstrip("/")
+    activation_link = f"{frontend_url}/activate/{uid}/{token}/"
+    html_content = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; background-color: #f8fafc; border-radius: 12px;">
+        <h2 style="color: #0f172a; margin-bottom: 8px;">¡Bienvenido a SmartSnack! 🥗</h2>
+        <p style="color: #475569; font-size: 15px; line-height: 1.5;">
+            Gracias por registrarte. Solo falta un paso para activar tu cuenta:
+        </p>
+        <div style="text-align: center; margin: 32px 0;">
+            <a href="{activation_link}"
+               style="background-color: #16a34a; color: #ffffff; text-decoration: none;
+                      padding: 12px 28px; border-radius: 8px; font-weight: bold;
+                      display: inline-block;">
+                Activar mi cuenta
+            </a>
+        </div>
+        <p style="color: #94a3b8; font-size: 13px;">
+            Si el botón no funciona, copia y pega este enlace en tu navegador:<br>
+            <a href="{activation_link}" style="color: #16a34a;">{activation_link}</a>
+        </p>
+    </div>
+    """
+    plain_message = strip_tags(html_content)
+
     send_mail(
-        "Activate your user account",
-        f"Please click the following link to activate your account.: {activation_link}",
+        "Activa tu cuenta en SmartSnack",
+        plain_message,
         settings.DEFAULT_FROM_EMAIL,
         [user.email],
         fail_silently=False,
+        html_message=html_content,
     )
     return activation_link
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
@@ -17,7 +16,6 @@ const STATUS_OPTIONS = [
 ];
 
 export default function BuyerOrdersPage() {
-  const router = useRouter();
   const [orders, setOrders] = useState<BuyerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
