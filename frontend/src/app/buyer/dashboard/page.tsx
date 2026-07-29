@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { ReviewPrompt } from "@/components/buyer/ReviewPrompt";
+import { RecommendedSection } from "@/components/catalog/RecommendedSection";
 
 function DashboardCard({
   href,
@@ -57,6 +58,7 @@ export default function BuyerDashboardPage() {
           description="Configura tus alergias y restricciones dietéticas."
         />
       </div>
+      <RecommendedSection className="mt-8" limit={5} />
     </DashboardShell>
   );
 }

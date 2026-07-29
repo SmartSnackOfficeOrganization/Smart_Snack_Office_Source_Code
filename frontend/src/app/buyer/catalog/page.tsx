@@ -8,6 +8,7 @@ import { CartIconButton } from "@/components/cart/CartIconButton";
 import { FilterSidebar } from "@/components/catalog/FilterSidebar";
 import { SortSelect } from "@/components/catalog/SortSelect";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
+import { RecommendedSection } from "@/components/catalog/RecommendedSection";
 import { getCatalogProducts, CatalogBrowseError } from "@/lib/catalog-browse";
 import { CatalogProduct } from "@/lib/catalog-browse.types";
 
@@ -133,6 +134,8 @@ function CatalogPageContent() {
           <h1 className="text-2xl font-bold text-slate-900">Catálogo</h1>
           <SortSelect value={ordering} onChange={handleOrderingChange} />
         </div>
+
+        <RecommendedSection className="mt-8" limit={5} />
 
         <div className="mt-6 flex flex-col gap-8 lg:flex-row">
           <div className="w-full shrink-0 lg:w-64">
