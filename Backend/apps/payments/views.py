@@ -7,16 +7,14 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.decorators import (api_view, permission_classes,
-                                       throttle_classes)
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
 from .models import Payment
 from .serializers import InitiateCheckoutSerializer, PaymentStatusSerializer
-from .services import (build_checkout_page, process_payment_webhook,
-                       verify_rapyd_webhook)
+from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook
 
 logger = logging.getLogger(__name__)
 

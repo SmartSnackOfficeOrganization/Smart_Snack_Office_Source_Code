@@ -5,9 +5,11 @@ import random
 from apps.authentication.models import BuyerProfile, SellerProfile, User
 from apps.demo_data.config import DemoDataConfig
 from apps.demo_data.personas import PERSONAS
-from apps.demo_data.providers.catalog_data import (random_address,
-                                                   random_business_name,
-                                                   random_full_name)
+from apps.demo_data.providers.catalog_data import (
+    random_address,
+    random_business_name,
+    random_full_name,
+)
 from django.db import transaction
 
 

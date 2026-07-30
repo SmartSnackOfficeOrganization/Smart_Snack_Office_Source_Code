@@ -10,8 +10,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .recommendation_serializers import RecommendationProductSerializer
-from .recommendation_service import (DEFAULT_LIMIT, MAX_LIMIT, MIN_LIMIT,
-                                     get_recommendations)
+from .recommendation_service import (
+    DEFAULT_LIMIT,
+    MAX_LIMIT,
+    MIN_LIMIT,
+    get_recommendations,
+)
 
 
 class ProductRecommendationsView(APIView):
