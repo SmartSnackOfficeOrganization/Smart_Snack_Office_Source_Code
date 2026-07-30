@@ -5,9 +5,10 @@ Forma alineada con el listado de catálogo del frontend (``CatalogProduct``)
 más metadatos de afinidad Item-Based CF.
 """
 
+from rest_framework import serializers
+
 from apps.catalog.models import Product
 from apps.catalog.serializers import CategorySerializer
-from rest_framework import serializers
 
 
 class RecommendationProductSerializer(serializers.ModelSerializer):

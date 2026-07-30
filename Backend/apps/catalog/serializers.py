@@ -1,6 +1,7 @@
-from apps.authentication.models import Order
 from django.db import transaction
 from rest_framework import serializers
+
+from apps.authentication.models import Order
 
 from .models import (
     Category,

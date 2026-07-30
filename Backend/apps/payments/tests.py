@@ -5,12 +5,13 @@ import json
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
-from apps.authentication.models import BuyerProfile, Order
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+
+from apps.authentication.models import BuyerProfile, Order
 
 from .models import Payment
 from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook

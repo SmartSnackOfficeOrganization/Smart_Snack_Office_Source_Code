@@ -4,9 +4,10 @@ import random
 import uuid
 from decimal import Decimal
 
+from django.utils import timezone
+
 from apps.demo_data.config import DemoDataConfig
 from apps.payments.models import Payment
-from django.utils import timezone
 
 
 class PaymentGenerator:

@@ -24,9 +24,10 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+from django.db.models import Q
+
 from apps.catalog.allergies import product_is_compatible
 from apps.catalog.models import Product
-from django.db.models import Q
 
 # --- Shim de importación de `ml/` -------------------------------------------
 # La carpeta `ml/` es hermana de `Backend/` (raíz del repo), por lo que no está

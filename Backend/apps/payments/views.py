@@ -2,7 +2,6 @@ import logging
 from urllib.parse import urlparse
 
 import requests as requests_lib
-from apps.orders.models import Order
 from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
@@ -11,6 +10,8 @@ from rest_framework.decorators import api_view, permission_classes, throttle_cla
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
+
+from apps.orders.models import Order
 
 from .models import Payment
 from .serializers import InitiateCheckoutSerializer, PaymentStatusSerializer
