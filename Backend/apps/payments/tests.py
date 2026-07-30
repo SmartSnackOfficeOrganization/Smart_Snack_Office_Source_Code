@@ -13,7 +13,8 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from .models import Payment
-from .services import build_checkout_page, process_payment_webhook, verify_rapyd_webhook
+from .services import (build_checkout_page, process_payment_webhook,
+                       verify_rapyd_webhook)
 
 User = get_user_model()
 

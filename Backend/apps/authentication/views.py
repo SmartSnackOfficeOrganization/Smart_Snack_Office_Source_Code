@@ -6,27 +6,21 @@ from django.core.mail import send_mail
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes, throttle_classes
+from rest_framework.decorators import (api_view, permission_classes,
+                                       throttle_classes)
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import (
-    BuyerProfileSerializer,
-    BuyerRegistrationSerializer,
-    ForgotPasswordSerializer,
-    ResetPasswordConfirmSerializer,
-    SellerRegistrationSerializer,
-    UserLoginSerializer,
-    UserProfileSerializer,
-)
-from .token import (
-    AccountActivationTokenGenetator,
-    PasswordResetTokenGenerator,
-    get_tokens_for_user,
-)
+from .serializers import (BuyerProfileSerializer, BuyerRegistrationSerializer,
+                          ForgotPasswordSerializer,
+                          ResetPasswordConfirmSerializer,
+                          SellerRegistrationSerializer, UserLoginSerializer,
+                          UserProfileSerializer)
+from .token import (AccountActivationTokenGenetator,
+                    PasswordResetTokenGenerator, get_tokens_for_user)
 
 User = get_user_model()
 

@@ -7,12 +7,9 @@ from django.urls import reverse
 from django.utils.timezone import now
 from rest_framework import status
 from rest_framework.test import APITestCase
-
 # requiere token_blacklist
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
+from rest_framework_simplejwt.token_blacklist.models import (BlacklistedToken,
+                                                             OutstandingToken)
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import BuyerProfile, SellerProfile, User
