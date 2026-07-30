@@ -1,8 +1,11 @@
 # Byte-compiled / optimized / DLL files
+Backend/venv/
 __pycache__/
 *.py[codz]
 *$py.class
 
+.env.prod
+.env.*
 # C extensions
 *.so
 
@@ -14,8 +17,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -223,3 +226,12 @@ node_modules/
 .env.local
 .env.production
 npm-debug.log*
+
+# Claude
+CLAUDE.MD
+
+# Entorno virtual de Python
+venv/
+.venv/
+env/
+ENV/
