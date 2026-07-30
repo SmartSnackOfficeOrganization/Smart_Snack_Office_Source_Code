@@ -1,8 +1,7 @@
 import requests
+from apps.authentication.token import get_tokens_for_user
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
-
-from apps.authentication.token import get_tokens_for_user
 
 User = get_user_model()
 

@@ -2,9 +2,8 @@
 Utilidades compartidas para restricciones alimentarias — tests.
 """
 
-from django.test import SimpleTestCase
-
 from apps.catalog.allergies import matching_allergens, product_is_compatible
+from django.test import SimpleTestCase
 
 
 class AllergyHelperTests(SimpleTestCase):

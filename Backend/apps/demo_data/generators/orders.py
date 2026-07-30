@@ -4,19 +4,15 @@ import math
 import random
 from datetime import timedelta
 
-from django.utils import timezone
-from rest_framework.exceptions import ValidationError
-
 from apps.authentication.models import User
 from apps.cart.models import CartItem
-from apps.cart.services import (
-    add_product_to_cart,
-    create_order_from_cart,
-    get_or_create_cart,
-)
+from apps.cart.services import (add_product_to_cart, create_order_from_cart,
+                                get_or_create_cart)
 from apps.demo_data.config import DemoDataConfig
 from apps.demo_data.generators.payments import PaymentGenerator
 from apps.demo_data.personas import get_persona
+from django.utils import timezone
+from rest_framework.exceptions import ValidationError
 
 
 class OrderGenerator:

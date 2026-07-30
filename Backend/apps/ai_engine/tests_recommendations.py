@@ -6,13 +6,12 @@ Pruebas del endpoint de recomendaciones (HU-07 / Item-Based CF).
 
 from decimal import Decimal
 
+from apps.authentication.models import BuyerProfile, Order, OrderItem
+from apps.catalog.models import Product, Review, Tag
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.test import APITestCase
-
-from apps.authentication.models import BuyerProfile, Order, OrderItem
-from apps.catalog.models import Product, Review, Tag
 
 User = get_user_model()
 

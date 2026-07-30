@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 CATEGORIES = [
     {"name": "Snacks", "description": "Bocadillos y aperitivos saludables"},
     {"name": "Bebidas frías", "description": "Jugos, tes y bebidas saludables"},
@@ -17,7 +16,9 @@ CATEGORIES = [
 def seed_categories(apps, schema_editor):
     Category = apps.get_model("catalog", "Category")
     for cat in CATEGORIES:
-        Category.objects.get_or_create(name=cat["name"], defaults={"description": cat["description"]})
+        Category.objects.get_or_create(
+            name=cat["name"], defaults={"description": cat["description"]}
+        )
 
 
 def reverse_seed_categories(apps, schema_editor):

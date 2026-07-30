@@ -1,11 +1,10 @@
 import uuid
 
+from apps.catalog.models import Product
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-
-from apps.catalog.models import Product
 
 
 class UserManager(BaseUserManager):
@@ -148,9 +147,8 @@ class Order(models.Model):
         en un estado final, no hace nada — protege contra reintentos
         del webhook de pago.
         """
-        from django.db import transaction
-
         from apps.catalog.models import Product
+        from django.db import transaction
 
         final_states = ("paid", "payment_failed", "cancelled", "refunded")
         if self.status in final_states:

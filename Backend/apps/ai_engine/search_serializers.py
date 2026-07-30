@@ -6,9 +6,8 @@ más los metadatos de la búsqueda (``relevance_score``, ``match_stage``) y
 compatibilidad alimentaria (``is_compatible``) frente a ``BuyerProfile.allergies``.
 """
 
-from rest_framework import serializers
-
 from apps.catalog.models import Product
+from rest_framework import serializers
 
 
 class SearchResultSerializer(serializers.ModelSerializer):

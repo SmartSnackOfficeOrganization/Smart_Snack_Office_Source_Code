@@ -17,23 +17,20 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set
 
-from django.core.cache import cache
-
 from apps.authentication.models import OrderItem
 from apps.catalog.allergies import matching_allergens
 from apps.catalog.models import Product, Review
+from django.core.cache import cache
 
 # --- Shim de importación de `ml/` (mismo patrón que search_service) ----------
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from ml.recommend.item_cf_engine import (  # noqa: E402
-    accumulate_interactions,
-    best_seed_item,
-    compute_item_similarity,
-    recommend_for_user,
-)
+from ml.recommend.item_cf_engine import (accumulate_interactions,  # noqa: E402
+                                         best_seed_item,
+                                         compute_item_similarity,
+                                         recommend_for_user)
 
 PAID_ORDER_STATUSES = ("paid", "shipped", "delivered")
 DEFAULT_LIMIT = 5

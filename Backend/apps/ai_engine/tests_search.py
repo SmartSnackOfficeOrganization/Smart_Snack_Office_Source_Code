@@ -8,11 +8,10 @@ Dependen del modelo ``Product`` de la app ``catalog`` y de ``scikit-learn``.
 
 from decimal import Decimal
 
+from apps.catalog.models import Category, Product
 from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase
-
-from apps.catalog.models import Category, Product
 
 User = get_user_model()
 

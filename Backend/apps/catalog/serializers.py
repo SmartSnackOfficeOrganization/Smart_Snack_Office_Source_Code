@@ -1,17 +1,9 @@
+from apps.authentication.models import Order
 from django.db import transaction
 from rest_framework import serializers
 
-from apps.authentication.models import Order
-
-from .models import (
-    Category,
-    NutritionFact,
-    Product,
-    ProductImage,
-    ProductTag,
-    Review,
-    Tag,
-)
+from .models import (Category, NutritionFact, Product, ProductImage,
+                     ProductTag, Review, Tag)
 
 
 class CategorySerializer(serializers.ModelSerializer):

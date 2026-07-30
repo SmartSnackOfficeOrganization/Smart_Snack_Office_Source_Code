@@ -4,19 +4,14 @@ Vista de la API de recomendaciones personalizadas (HU-07 / Item-Based CF).
 GET /api/catalog/recommendations/?limit=5
 """
 
+from apps.cart.permissions import isBuyer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.cart.permissions import isBuyer
-
 from .recommendation_serializers import RecommendationProductSerializer
-from .recommendation_service import (
-    DEFAULT_LIMIT,
-    MAX_LIMIT,
-    MIN_LIMIT,
-    get_recommendations,
-)
+from .recommendation_service import (DEFAULT_LIMIT, MAX_LIMIT, MIN_LIMIT,
+                                     get_recommendations)
 
 
 class ProductRecommendationsView(APIView):

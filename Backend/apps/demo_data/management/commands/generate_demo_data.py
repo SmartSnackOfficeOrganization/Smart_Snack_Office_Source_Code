@@ -1,7 +1,6 @@
-from django.core.management.base import BaseCommand
-
 from apps.demo_data.config import DemoDataConfig
 from apps.demo_data.orchestrator import DemoDataOrchestrator
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):

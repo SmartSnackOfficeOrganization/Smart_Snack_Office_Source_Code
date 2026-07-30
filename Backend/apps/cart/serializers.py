@@ -1,9 +1,8 @@
-from django.db import transaction
-from rest_framework import serializers
-
 from apps.catalog.allergies import matching_allergens
 from apps.catalog.models import Product
 from apps.catalog.serializers import ProductSerializer
+from django.db import transaction
+from rest_framework import serializers
 
 from .models import Cart, CartItem
 

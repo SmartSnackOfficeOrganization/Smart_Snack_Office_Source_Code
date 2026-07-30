@@ -1,9 +1,8 @@
 from decimal import Decimal
 
+from apps.orders.models import Order, OrderItem
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
-
-from apps.orders.models import Order, OrderItem
 
 from .models import Cart, CartItem
 
