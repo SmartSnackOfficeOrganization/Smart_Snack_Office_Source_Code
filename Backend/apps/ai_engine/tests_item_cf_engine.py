@@ -14,9 +14,11 @@ if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
 from ml.recommend.item_cf_engine import accumulate_interactions  # noqa: E402
-from ml.recommend.item_cf_engine import (best_seed_item,
-                                         compute_item_similarity,
-                                         recommend_for_user)
+from ml.recommend.item_cf_engine import (
+    best_seed_item,
+    compute_item_similarity,
+    recommend_for_user,
+)
 
 
 class ItemCFEngineTests(SimpleTestCase):

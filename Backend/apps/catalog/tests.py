@@ -45,8 +45,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .models import (Category, NutritionFact, Product, ProductImage,
-                     ProductTag, Tag)
+from .models import Category, NutritionFact, Product, ProductImage, ProductTag, Tag
 from .permissions import IsProductOwner, IsSeller
 from .serializers import ProductSerializer
 

@@ -11,8 +11,7 @@ está en ``apps.ai_engine.recommendation_service``.
 
 from __future__ import annotations
 
-from typing import (Dict, List, Mapping, MutableMapping, Optional, Sequence,
-                    Set, Tuple)
+from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Set, Tuple
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
