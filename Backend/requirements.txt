@@ -16,3 +16,4 @@ scikit-learn==1.5.2
 requests==2.34.2
 reportlab==5.0.0
 python-barcode==0.16.1
+whitenoise==6.9.0
