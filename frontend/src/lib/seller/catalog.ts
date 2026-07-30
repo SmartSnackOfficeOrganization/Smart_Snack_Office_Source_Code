@@ -48,7 +48,7 @@ async function authFetch(url: string, options: RequestInit = {}): Promise<Respon
 }
 
 export async function listMyProducts(): Promise<SellerProductListResponse> {
-  const response = await authFetch(`${getBaseUrl()}/api/catalog/products/`);
+  const response = await authFetch(`${getBaseUrl()}/api/catalog/products/mine/`);
 
   if (!response.ok) {
     throw new SellerCatalogError("Error al cargar productos.", "UNKNOWN");

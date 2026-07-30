@@ -66,17 +66,34 @@ class ProductsViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == "create":
             return [IsSeller()]
-        if (
-            self.action == "update"
-            or self.action == "partial_update"
-            or self.action == "destroy"
-        ):
+        if self.action in ("update", "partial_update", "destroy"):
             return [IsSeller(), IsProductOwner()]
-        else:
-            return []
+        if self.action == "mine":
+            return [IsSeller()]
+        return []
+
 
     def perform_create(self, serializer):
         serializer.save()
+
+    @action(detail=False, methods=["get"], url_path="mine")
+    def mine(self, request):
+        """Catálogo propio del vendedor autenticado: SOLO sus productos,
+        sin importar el status (activo/inactivo)."""
+        qs = (
+            Product.objects.select_related("category", "nutrition_facts", "seller")
+            .prefetch_related("tags", "images")
+            .filter(seller=request.user)
+        )
+        qs = self.filter_queryset(qs)  # respeta filtros/ordering existentes
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
 
 
 class ProductImageViewSet(viewsets.ModelViewSet):
